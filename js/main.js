@@ -13,8 +13,10 @@ import { idCasosScreen } from './screens/id-casos.js';
 import { proDashboardScreen } from './screens/pro-dashboard.js';
 import { proCasoScreen } from './screens/pro-caso.js';
 import { proConsultaScreen } from './screens/pro-consulta.js';
-import { appAgendaScreen, appConsultaScreen, appPushScreen } from './screens/app-cliente.js';
-import { meetScreen } from './screens/canais.js';
+import { idPainelScreen } from './screens/id-painel.js';
+import { appConsultaScreen, appPushScreen } from './screens/app-cliente.js';
+import { appWhiteLabelScreen } from './screens/app-whitelabel.js';
+import { whatsappScreen } from './screens/whatsapp.js';
 
 const log = createLogger('main');
 
@@ -34,9 +36,10 @@ const boot = () => {
   registerScreen('pro-caso', proCasoScreen);
   registerScreen('pro-consulta', proConsultaScreen);
   registerScreen('app-push', appPushScreen);
-  registerScreen('app-agenda', appAgendaScreen);
+  registerScreen('id-painel', idPainelScreen);
+  registerScreen('whatsapp', whatsappScreen);
   registerScreen('app-consulta', appConsultaScreen);
-  registerScreen('meet', meetScreen);
+  registerScreen('app-whitelabel', appWhiteLabelScreen);
 
   initOverlays();
   initNavigator({

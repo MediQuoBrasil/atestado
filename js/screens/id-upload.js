@@ -4,7 +4,9 @@
 
 import { delegate, esc, icon, qs } from '../core/dom.js';
 import { createLogger } from '../core/logger.js';
-import { fmtCnpj, fmtDate, plural } from '../core/format.js';
+import {
+  fmtCnpj, fmtDate, fmtTelefone, plural,
+} from '../core/format.js';
 import {
   STATUS, criarCaso, empresaDoCaso, getColaborador, getEmpresa, listarCasos,
 } from '../core/store.js';
@@ -27,6 +29,7 @@ const log = createLogger('id.upload');
 /**
  * @typedef {Object} FormValues
  * @property {string} colaboradorId
+ * @property {string} telefone     Celular com WhatsApp; vem da base e o RH confirma ou corrige.
  * @property {string} dataInicio
  * @property {string} dias
  * @property {string} dataEmissao
@@ -155,6 +158,11 @@ const renderReview = () => {
           <select id="fColab" class="id-input ${e.colaboradorId ? 'err' : ''}" data-field="colaboradorId">${colaboradorOptions(f.colaboradorId)}</select>
           ${e.colaboradorId ? `<span class="id-err">${esc(e.colaboradorId)}</span>` : ''}
         </div>
+        <div class="id-field full">
+          <label class="id-label" for="fTel">Celular com WhatsApp do colaborador</label>
+          <input id="fTel" type="tel" inputmode="tel" autocomplete="off" maxlength="20" class="id-input ${e.telefone ? 'err' : ''}" data-field="telefone" placeholder="(11) 98765-4321" value="${esc(f.telefone)}">
+          ${e.telefone ? `<span class="id-err">${esc(e.telefone)}</span>` : '<span class="id-hint">A equipe Telessaúde da MediQuo entra em contato por esse número para marcar a consulta.</span>'}
+        </div>
         <div class="id-field"><label class="id-label" for="fEmp">Empresa</label><input id="fEmp" class="id-input" readonly value="${esc(emp?.razao ?? '—')}"></div>
         <div class="id-field"><label class="id-label" for="fCnpj">CNPJ vinculado</label><input id="fCnpj" class="id-input" readonly value="${esc(emp ? fmtCnpj(emp.cnpj) : '—')}"></div>
         <div class="id-field">
@@ -175,7 +183,7 @@ const renderReview = () => {
         </div>
       </div>
       ${ui.text ? `<details class="id-details"><summary>Texto lido do PDF (${ui.text.length} caracteres, CID ocultado)</summary><pre>${textoRedigido(ui.text)}</pre></details>` : ''}
-      <label class="id-check"><input type="checkbox" id="fCiente" data-field="ciente" ${f.ciente ? 'checked' : ''}><span>Confirmo que o colaborador foi informado de que a MediQuo fará contato para acompanhamento clínico, conforme a política de privacidade da empresa.</span></label>
+      <label class="id-check"><input type="checkbox" id="fCiente" data-field="ciente" ${f.ciente ? 'checked' : ''}><span>Confirmo que o colaborador foi informado de que a MediQuo fará contato pelo WhatsApp para acompanhamento clínico, conforme a política de privacidade da empresa.</span></label>
       ${e.ciente ? `<span class="id-err">${esc(e.ciente)}</span>` : ''}
       <div class="id-actions">
         <button type="submit" class="id-btn">${icon('send', 'ic-sm')} Enviar para a MediQuo</button>
@@ -201,6 +209,7 @@ const renderDone = (ctx) => {
       <dl class="id-kv">
         <dt>Caso</dt><dd>${esc(caso.id)}</dd>
         <dt>Colaborador</dt><dd>${esc(colab?.nome ?? '')}</dd>
+        <dt>WhatsApp</dt><dd>${esc(fmtTelefone(caso.telefone))}</dd>
         <dt>Período</dt><dd>${esc(fmtDate(caso.dataInicio))} · ${esc(plural(caso.dias, 'dia', 'dias'))}</dd>
         <dt>Status</dt><dd><span class="pill ${STATUS[caso.status].tone}">${esc(STATUS[caso.status].label)}</span></dd>
       </dl>
@@ -304,6 +313,7 @@ const processar = async (bytes, file, rerender) => {
     const x = ui.extraido;
     ui.form = {
       colaboradorId: ui.match.id ?? '',
+      telefone: ui.match.id ? fmtTelefone(getColaborador(ui.match.id)?.telefone ?? '') : '',
       dataInicio: typeof x.dataInicio.value === 'string' ? x.dataInicio.value : '',
       dias: x.dias.value !== null ? String(x.dias.value) : '',
       dataEmissao: typeof x.dataEmissao.value === 'string' ? x.dataEmissao.value : '',
@@ -335,7 +345,7 @@ const enviar = (ctx, rerender) => {
     return;
   }
   const result = criarCaso({
-    colaboradorId: f.colaboradorId, cid: f.cid, dias: f.dias, dataInicio: f.dataInicio, dataEmissao: f.dataEmissao,
+    colaboradorId: f.colaboradorId, telefone: f.telefone, cid: f.cid, dias: f.dias, dataInicio: f.dataInicio, dataEmissao: f.dataEmissao,
     medicoEmissor: f.medicoEmissor, crm: f.crm, origem: ui.origem, arquivoNome: ui.file?.name ?? 'atestado.pdf',
     pdfBytes: ui.bytes, confianca: ui.extraido ? Object.fromEntries(Object.entries(ui.extraido).filter(([k]) => k !== 'chars').map(([k, v]) => [k, v.confidence])) : null,
   });
@@ -409,7 +419,11 @@ const bind = (root, ctx) => {
     const field = el.dataset?.field;
     if (!field || !ui.form) return;
     ui.form[field] = el.type === 'checkbox' ? el.checked : el.value;
-    if (field === 'colaboradorId') rerender();
+    if (field === 'colaboradorId') {
+      // Sugere o celular da base do colaborador escolhido; o RH pode corrigir antes de enviar.
+      ui.form.telefone = fmtTelefone(getColaborador(el.value)?.telefone ?? '');
+      rerender();
+    }
   };
   const onInput = (event) => {
     const el = /** @type {HTMLInputElement} */ (event.target);

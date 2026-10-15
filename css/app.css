@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   App MediQuo (colaborador), tela bloqueada e videochamada externa.
+   App MediQuo Saúde (colaborador), tela bloqueada e videochamada no app.
    Visual do app segue o print de Agendamento (Roboto, roxo #4a1ea6, FAB #201552).
    ═══════════════════════════════════════════════════════════ */
 
@@ -40,16 +40,7 @@
 .app-pill.purple { background: #ece5ff; color: var(--a-primary); }
 .app-fab { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border: 0; border-radius: 99px; background: var(--a-navy); color: #fff; font-size: 16px; font-weight: 500; box-shadow: 0 6px 18px rgba(32, 21, 82, .35); white-space: nowrap; }
 
-.app-invite { margin: 4px 14px 12px; padding: 16px; border-radius: 16px; background: #fff; border: 1.5px solid var(--a-primary); box-shadow: 0 6px 20px rgba(74, 30, 166, .12); display: grid; gap: 12px; animation: inviteIn .5s cubic-bezier(.2, .7, .2, 1) both; }
 @keyframes inviteIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-.app-invite .tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--a-primary); text-transform: uppercase; letter-spacing: .06em; }
-.app-invite h2 { margin: 0; font-size: 18px; font-weight: 500; }
-.app-invite p { margin: 0; font-size: 14px; color: #4a4857; line-height: 1.45; }
-.app-slots { display: grid; gap: 8px; }
-.app-slot { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--a-line); background: #fafafc; font-size: 14.5px; cursor: pointer; text-align: left; }
-.app-slot.on { border-color: var(--a-primary); background: #f3eeff; box-shadow: 0 0 0 1px var(--a-primary); }
-.app-slot .r { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #b9b6c6; flex-shrink: 0; }
-.app-slot.on .r { border: 5px solid var(--a-primary); }
 .app-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px 16px; border: 0; border-radius: 99px; background: var(--a-primary); color: #fff; font-size: 15.5px; font-weight: 500; cursor: pointer; }
 .app-btn:disabled { opacity: .45; cursor: not-allowed; }
 .app-btn.go { background: var(--a-green); animation: ready 1.8s ease-in-out infinite; }
@@ -92,24 +83,3 @@
 .typing i:nth-child(2) { animation-delay: .15s; }
 .typing i:nth-child(3) { animation-delay: .3s; }
 @keyframes dot { 50% { transform: translateY(-4px); opacity: .5; } }
-
-/* Videochamada externa (Meet, simulada, sem marca) */
-.meet { height: 100%; display: grid; grid-template-columns: 1fr 300px; background: #202124; color: #e8eaed; font-family: 'Roboto', system-ui, sans-serif; }
-.meet-stage { display: grid; grid-template-rows: 1fr auto; padding: 16px; gap: 12px; min-width: 0; }
-.meet-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.meet-tile { position: relative; border-radius: 12px; background: #3c4043; display: grid; place-items: center; overflow: hidden; }
-.meet-tile .face { width: 110px; height: 110px; border-radius: 50%; display: grid; place-items: center; font-size: 38px; font-weight: 500; color: #fff; }
-.meet-tile .name { position: absolute; left: 12px; bottom: 10px; font-size: 13px; }
-.meet-tile.speaking { box-shadow: inset 0 0 0 3px #8ab4f8; }
-.meet-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.meet-bar .code { font-size: 14px; }
-.meet-ctrls { display: flex; gap: 10px; }
-.meet-ctrls span, .meet-ctrls button { width: 44px; height: 44px; border-radius: 50%; border: 0; background: #3c4043; color: #e8eaed; display: grid; place-items: center; }
-.meet-ctrls button.end { width: auto; padding: 0 18px; border-radius: 99px; background: #ea4335; color: #fff; font: 500 14px 'Roboto', sans-serif; cursor: pointer; gap: 8px; display: inline-flex; align-items: center; }
-.meet-ctrls .ic { width: 20px; height: 20px; }
-.meet-side { background: #fff; color: #202124; margin: 16px 16px 16px 0; border-radius: 12px; padding: 16px; display: grid; align-content: start; gap: 12px; font-size: 13px; }
-.meet-side h3 { margin: 0; font-size: 16px; font-weight: 500; }
-.meet-side .link { padding: 8px 10px; background: #f1f3f4; border-radius: 6px; word-break: break-all; font-size: 12.5px; }
-.meet-side .tip { padding: 10px; border-radius: 8px; background: #fef7e0; color: #5f4300; }
-.meet-empty { grid-column: 1 / -1; display: grid; place-items: center; text-align: center; gap: 12px; padding: 40px; }
-.meet-empty button { padding: 10px 18px; border-radius: 99px; border: 1px solid #5f6368; background: transparent; color: #e8eaed; cursor: pointer; font: 500 14px 'Roboto', sans-serif; }

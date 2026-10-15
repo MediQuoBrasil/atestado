@@ -3,7 +3,7 @@
  * No produto real essas regras vivem no servidor; aqui rodam no navegador apenas para simulação.
  */
 
-import { diffDays } from '../core/format.js';
+import { addDays, diffDays } from '../core/format.js';
 import { lookupCid } from './cid.js';
 
 /**
@@ -36,8 +36,7 @@ export const STATUS = Object.freeze({
   em_analise: { label: 'Em análise médica', tone: 'info' },
   validado: { label: 'Documento validado', tone: 'ok' },
   contato_pendente: { label: 'Contato pendente', tone: 'warn' },
-  aguardando_rh: { label: 'Aguardando agenda do RH', tone: 'warn' },
-  convite_enviado: { label: 'Convite enviado', tone: 'info' },
+  convite_enviado: { label: 'Convite no WhatsApp', tone: 'info' },
   agendado: { label: 'Consulta agendada', tone: 'info' },
   em_consulta: { label: 'Em consulta', tone: 'primary' },
   em_acompanhamento: { label: 'Em acompanhamento', tone: 'primary' },
@@ -106,4 +105,43 @@ export const DESFECHOS = Object.freeze({
   manter: { label: 'Manter afastamento conforme atestado', rh: 'Afastamento mantido conforme o atestado apresentado. Retorno previsto na data final.', status: 'concluido' },
   acompanhamento: { label: 'Seguir em acompanhamento clínico', rh: 'Colaborador em acompanhamento clínico pela MediQuo. Nova devolutiva em até 7 dias.', status: 'em_acompanhamento' },
   encaminhar_mt: { label: 'Encaminhar à Medicina do Trabalho', rh: 'Encaminhado à Medicina do Trabalho para avaliação de aptidão ao retorno.', status: 'encaminhado' },
+});
+
+/**
+ * Dias do afastamento que caem dentro do período filtrado (interseção inclusiva).
+ * @param {string} inicioIso Início do afastamento.
+ * @param {number} dias      Duração do afastamento.
+ * @param {string} deIso     Início do período.
+ * @param {string} ateIso    Fim do período.
+ * @returns {number} 0 quando não há interseção.
+ */
+export const diasNoPeriodo = (inicioIso, dias, deIso, ateIso) => {
+  if (dias < 1 || deIso > ateIso) return 0;
+  const fimIso = addDays(inicioIso, dias - 1);
+  const ini = inicioIso > deIso ? inicioIso : deIso;
+  const fim = fimIso < ateIso ? fimIso : ateIso;
+  return ini > fim ? 0 : diffDays(ini, fim) + 1;
+};
+
+/** Divisor do custo mensal para chegar ao custo por dia corrido de afastamento. */
+export const DIAS_CUSTO_MES = 30;
+
+/**
+ * Custo estimado de um afastamento: custo mensal ÷ 30 × dias corridos.
+ * @param {number} custoMensal R$.
+ * @param {number} dias
+ * @returns {number} R$.
+ */
+export const custoAfastamento = (custoMensal, dias) => (custoMensal > 0 && dias > 0 ? (custoMensal / DIAS_CUSTO_MES) * dias : 0);
+
+/** Apps em que o colaborador recebe a videochamada (rótulos exibidos). */
+export const APPS_CONSULTA = Object.freeze({
+  white_label: 'App de telessaúde da empresa',
+  mediquo_saude: 'App MediQuo Saúde',
+});
+
+/** Como o app aparece no meio de uma frase dirigida ao colaborador. */
+export const APPS_CONSULTA_FRASE = Object.freeze({
+  white_label: 'app de telessaúde da sua empresa',
+  mediquo_saude: 'app MediQuo Saúde',
 });

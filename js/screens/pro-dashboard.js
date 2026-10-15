@@ -4,7 +4,7 @@
 
 import { delegate, esc, icon } from '../core/dom.js';
 import {
-  addDays, diffDays, fmtCnpj, fmtDate, fmtMonth, initials, normalize, plural,
+  addDays, diffDays, fmtCnpj, fmtDate, fmtMonth, fmtTelefone, initials, normalize, plural,
 } from '../core/format.js';
 import {
   STATUS, TODAY, empresaDoCaso, getColaborador, getFocusCase, listarCasos, setFocusCase,
@@ -189,7 +189,7 @@ const render = () => {
     const novo = c.id === focusId;
     return `
       <tr class="${novo ? 'focus' : ''}" data-action="abrir-caso" data-id="${esc(c.id)}" tabindex="0">
-        <td><div class="who"><span class="pro-avatar primary">${esc(initials(l.colab?.nome))}</span><div><p class="n">${esc(l.colab?.nome ?? '')} ${novo ? '<span class="badge new">novo</span>' : ''}</p><span class="sub">${esc(l.colab?.cargo ?? '')} · ${esc(c.id)}</span></div></div></td>
+        <td><div class="who"><span class="pro-avatar primary">${esc(initials(l.colab?.nome))}</span><div><p class="n">${esc(l.colab?.nome ?? '')} ${novo ? '<span class="badge new">novo</span>' : ''}</p><span class="sub">${esc(l.colab?.cargo ?? '')} · ${esc(c.id)}</span><span class="sub">${icon('messageCircle', 'ic-xs')} ${esc(fmtTelefone(c.telefone))}</span></div></div></td>
         <td class="num">${esc(fmtCnpj(l.emp?.cnpj ?? ''))}<span class="sub">${esc(l.emp?.razao ?? '')}</span></td>
         <td><button type="button" class="pdf-chip" data-action="ver-pdf" data-id="${esc(c.id)}" title="Abrir atestado">${icon('fileText', 'ic-sm')} PDF</button></td>
         <td>${l.cid ? `<span class="cid">${esc(l.cid.code)}</span><span class="sub">${esc(l.cid.desc)}</span>` : '<span class="sub">Não informado</span>'}</td>
@@ -213,7 +213,7 @@ const render = () => {
 
   return proShell({
     title: 'Absenteísmo',
-    subtitle: 'Atestados enviados pelo RH dos clientes, recorrência e acompanhamento clínico.',
+    subtitle: 'Atestados e contatos enviados pelo RH dos clientes, recorrência e acompanhamento clínico. Visível para a equipe médica e a gestão.',
     content: `${kpis}${charts}${filtrosHtml}${tabela}`,
   });
 };

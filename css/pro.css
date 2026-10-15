@@ -200,3 +200,4 @@
 .pro-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .75rem; }
 .pro-mini { display: grid; gap: .125rem; padding: .625rem .75rem; border-radius: .5rem; background: var(--p-gray-50); font-size: .75rem; color: var(--p-muted-fg); }
 .pro-mini b { font-size: .875rem; color: var(--p-gray-900); }
+.pro-err { margin: 0; font-size: .8125rem; color: #be123c; }

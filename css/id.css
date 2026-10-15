@@ -195,13 +195,25 @@
 .id-timeline li::before { content: ''; width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; background: var(--id-primary); box-shadow: 0 0 0 3px #ede5ff; }
 .id-timeline .t { color: var(--id-gray-500); font-size: .75rem; font-variant-numeric: tabular-nums; }
 
-.id-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .5rem; }
-.id-slot { position: relative; }
-.id-slot input { position: absolute; opacity: 0; }
-.id-slot span { display: grid; gap: 2px; padding: .625rem .75rem; border: 1px solid var(--id-border); border-radius: .5rem; cursor: pointer; font-size: .8125rem; }
-.id-slot span b { font-weight: 600; }
-.id-slot input:checked + span { border-color: var(--id-primary); background: #f6f2ff; box-shadow: 0 0 0 1px var(--id-primary); }
-.id-slot input:focus-visible + span { outline: 2px solid var(--id-primary); outline-offset: 2px; }
-
 .id-note { display: flex; gap: .625rem; align-items: flex-start; padding: .75rem 1rem; border-radius: .5rem; background: var(--id-info-bg); color: #1e3a8a; font-size: .8125rem; }
 .id-note .ic-sm { margin-top: 2px; }
+
+/* Painel do RH (custo e dias de atestado) */
+.id-filterbar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.25rem; }
+.id-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.id-chip { height: 2rem; padding: 0 .875rem; border-radius: 99px; border: 1px solid var(--id-border); background: #fff; font-size: .8125rem; font-weight: 500; color: var(--id-gray-700); cursor: pointer; transition: border-color .15s, background .15s; }
+.id-chip:hover { border-color: var(--id-primary); }
+.id-chip.on { background: var(--id-primary); border-color: var(--id-primary); color: #fff; }
+.id-range { display: flex; align-items: center; gap: .5rem; }
+.id-range .id-input { width: auto; height: 2rem; }
+.id-filterbar .id-err { flex-basis: 100%; margin: 0; }
+.id-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+.id-kpi { padding: 1rem 1.25rem; border: 1px solid var(--id-border); border-radius: .5rem; background: var(--id-gray-50); }
+.id-kpi p { margin: 0; }
+.id-kpi .l { display: flex; align-items: center; gap: .375rem; font-size: .8125rem; font-weight: 500; color: var(--id-gray-600); }
+.id-kpi .l .ic-sm { color: var(--id-purple-600); }
+.id-kpi .v { margin-top: .25rem; font-size: 1.625rem; font-weight: 700; color: var(--id-gray-900); font-variant-numeric: tabular-nums; }
+.id-kpi .s { font-size: .75rem; color: var(--id-gray-500); }
+.id-table th.r, .id-table td.r { text-align: right; }
+.id-table tfoot td { font-weight: 600; border-bottom: 0; background: var(--id-gray-50); }
+.id-table td.id-empty { padding: 1.5rem; }

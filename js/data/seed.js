@@ -17,7 +17,8 @@
  * @property {string} cpf       11 dígitos.
  * @property {string} empresaId
  * @property {string} cargo
- * @property {string} telefone  Formato exibível.
+ * @property {string} telefone    Celular com WhatsApp, só dígitos (DDD + 9 dígitos).
+ * @property {number} custoMensal Custo mensal do colaborador para a empresa (R$), cadastrado pelo RH.
  */
 
 /** @type {ReadonlyArray<Empresa>} */
@@ -30,22 +31,22 @@ export const EMPRESAS = Object.freeze([
 
 /** @type {ReadonlyArray<Colaborador>} */
 export const COLABORADORES = Object.freeze([
-  { id: 'col-01', nome: 'Mariana Teixeira Duarte', cpf: '52998224725', empresaId: 'emp-1', cargo: 'Analista de expedição', telefone: '(11) 9****-4471' },
-  { id: 'col-02', nome: 'Rafael Monteiro Lins', cpf: '15350946056', empresaId: 'emp-1', cargo: 'Operador de empilhadeira', telefone: '(11) 9****-2208' },
-  { id: 'col-03', nome: 'Juliana Prado Assunção', cpf: '28471639050', empresaId: 'emp-1', cargo: 'Coordenadora de frota', telefone: '(11) 9****-9013' },
-  { id: 'col-04', nome: 'Diego Albuquerque Rocha', cpf: '39053344705', empresaId: 'emp-1', cargo: 'Motorista', telefone: '(11) 9****-6620' },
-  { id: 'col-05', nome: 'Camila Fontes Viana', cpf: '61720495858', empresaId: 'emp-2', cargo: 'Desenvolvedora', telefone: '(21) 9****-1187' },
-  { id: 'col-06', nome: 'Thiago Barreto Nunes', cpf: '74218503680', empresaId: 'emp-2', cargo: 'Analista de suporte', telefone: '(21) 9****-3354' },
-  { id: 'col-07', nome: 'Larissa Moura Campos', cpf: '80536127921', empresaId: 'emp-2', cargo: 'Product designer', telefone: '(21) 9****-7742' },
-  { id: 'col-08', nome: 'Bruno Cardoso Lemos', cpf: '93648201506', empresaId: 'emp-2', cargo: 'Customer success', telefone: '(21) 9****-0569' },
-  { id: 'col-09', nome: 'Patrícia Gomes Ribeiro', cpf: '11827364599', empresaId: 'emp-3', cargo: 'Auxiliar de produção', telefone: '(19) 9****-8820' },
-  { id: 'col-10', nome: 'Eduardo Siqueira Paes', cpf: '24739058197', empresaId: 'emp-3', cargo: 'Supervisor de linha', telefone: '(19) 9****-1406' },
-  { id: 'col-11', nome: 'Aline Rezende Castro', cpf: '36581270903', empresaId: 'emp-3', cargo: 'Técnica de qualidade', telefone: '(19) 9****-5578' },
-  { id: 'col-12', nome: 'Vinícius Araújo Pinto', cpf: '47392516809', empresaId: 'emp-3', cargo: 'Auxiliar de produção', telefone: '(19) 9****-2931' },
-  { id: 'col-13', nome: 'Fernanda Lopes Brandão', cpf: '58163042753', empresaId: 'emp-4', cargo: 'Gerente de loja', telefone: '(31) 9****-6047' },
-  { id: 'col-14', nome: 'Gustavo Henrique Melo', cpf: '69284715300', empresaId: 'emp-4', cargo: 'Operador de caixa', telefone: '(31) 9****-3915' },
-  { id: 'col-15', nome: 'Renata Queiroz Farias', cpf: '70451839684', empresaId: 'emp-4', cargo: 'Repositora', telefone: '(31) 9****-7260' },
-  { id: 'col-16', nome: 'Lucas Ventura Dias', cpf: '81629347078', empresaId: 'emp-4', cargo: 'Estoquista', telefone: '(31) 9****-4182' },
+  { id: 'col-01', nome: 'Mariana Teixeira Duarte', cpf: '52998224725', empresaId: 'emp-1', cargo: 'Analista de expedição', telefone: '11987654471', custoMensal: 3800 },
+  { id: 'col-02', nome: 'Rafael Monteiro Lins', cpf: '15350946056', empresaId: 'emp-1', cargo: 'Operador de empilhadeira', telefone: '11991232208', custoMensal: 3200 },
+  { id: 'col-03', nome: 'Juliana Prado Assunção', cpf: '28471639050', empresaId: 'emp-1', cargo: 'Coordenadora de frota', telefone: '11977419013', custoMensal: 7400 },
+  { id: 'col-04', nome: 'Diego Albuquerque Rocha', cpf: '39053344705', empresaId: 'emp-1', cargo: 'Motorista', telefone: '11985306620', custoMensal: 4100 },
+  { id: 'col-05', nome: 'Camila Fontes Viana', cpf: '61720495858', empresaId: 'emp-2', cargo: 'Desenvolvedora', telefone: '21996121187', custoMensal: 9800 },
+  { id: 'col-06', nome: 'Thiago Barreto Nunes', cpf: '74218503680', empresaId: 'emp-2', cargo: 'Analista de suporte', telefone: '21980443354', custoMensal: 4600 },
+  { id: 'col-07', nome: 'Larissa Moura Campos', cpf: '80536127921', empresaId: 'emp-2', cargo: 'Product designer', telefone: '21973587742', custoMensal: 8900 },
+  { id: 'col-08', nome: 'Bruno Cardoso Lemos', cpf: '93648201506', empresaId: 'emp-2', cargo: 'Customer success', telefone: '21992700569', custoMensal: 6100 },
+  { id: 'col-09', nome: 'Patrícia Gomes Ribeiro', cpf: '11827364599', empresaId: 'emp-3', cargo: 'Auxiliar de produção', telefone: '19988168820', custoMensal: 2700 },
+  { id: 'col-10', nome: 'Eduardo Siqueira Paes', cpf: '24739058197', empresaId: 'emp-3', cargo: 'Supervisor de linha', telefone: '19994311406', custoMensal: 6800 },
+  { id: 'col-11', nome: 'Aline Rezende Castro', cpf: '36581270903', empresaId: 'emp-3', cargo: 'Técnica de qualidade', telefone: '19977955578', custoMensal: 4300 },
+  { id: 'col-12', nome: 'Vinícius Araújo Pinto', cpf: '47392516809', empresaId: 'emp-3', cargo: 'Auxiliar de produção', telefone: '19981022931', custoMensal: 2700 },
+  { id: 'col-13', nome: 'Fernanda Lopes Brandão', cpf: '58163042753', empresaId: 'emp-4', cargo: 'Gerente de loja', telefone: '31999476047', custoMensal: 8200 },
+  { id: 'col-14', nome: 'Gustavo Henrique Melo', cpf: '69284715300', empresaId: 'emp-4', cargo: 'Operador de caixa', telefone: '31982133915', custoMensal: 2600 },
+  { id: 'col-15', nome: 'Renata Queiroz Farias', cpf: '70451839684', empresaId: 'emp-4', cargo: 'Repositora', telefone: '31976897260', custoMensal: 2500 },
+  { id: 'col-16', nome: 'Lucas Ventura Dias', cpf: '81629347078', empresaId: 'emp-4', cargo: 'Estoquista', telefone: '31990554182', custoMensal: 2800 },
 ]);
 
 /**
@@ -100,3 +101,6 @@ export const SEED_ROWS = Object.freeze([
 
 /** Data de referência do protótipo ("hoje"). */
 export const TODAY = '2026-10-13';
+
+/** Médica do programa que atende as consultas de acompanhamento (fictícia). */
+export const MEDICA_PROGRAMA = Object.freeze({ nome: 'Dra. Beatriz Sampaio', crm: 'CRM-SP 214587' });

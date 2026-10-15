@@ -175,7 +175,28 @@ export const normalize = (value) => String(value ?? '').normalize('NFD').replace
 export const plural = (n, singular, plural) => `${n} ${n === 1 ? singular : plural}`;
 
 /**
- * 'AAAA-MM-DDTHH:mm' → 'qua., 14 de outubro · 09:30 – 10:00' (consultas de 30 min).
+ * Celular brasileiro: '11987654471' → '(11) 98765-4471'. Valor fora do formato volta como veio.
+ * @param {string} value
+ * @returns {string}
+ */
+export const fmtTelefone = (value) => {
+  const d = digits(value);
+  if (d.length !== 11) return String(value ?? '');
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+};
+
+/** Formatador de moeda reaproveitado (Intl é caro de instanciar). */
+const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+
+/**
+ * Valor em reais sem centavos: 12345.6 → 'R$ 12.346'.
+ * @param {number} value
+ * @returns {string}
+ */
+export const fmtBRL = (value) => BRL.format(Number.isFinite(value) ? value : 0);
+
+/**
+ * 'AAAA-MM-DDTHH:mm' →'qua., 14 de outubro · 09:30 – 10:00' (consultas de 30 min).
  * @param {string} slot
  * @returns {string}
  */

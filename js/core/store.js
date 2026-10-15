@@ -4,10 +4,12 @@
  */
 
 import { createLogger } from './logger.js';
-import { addDays, brToIso, parseIsoDate } from './format.js';
+import {
+  addDays, brToIso, digits, parseIsoDate,
+} from './format.js';
 import { COLABORADORES, EMPRESAS, MEDICOS_EMISSORES, SEED_ROWS, TODAY } from '../data/seed.js';
 import { lookupCid } from '../data/cid.js';
-import { STATUS, triar } from '../data/rules.js';
+import { DESFECHOS, STATUS, triar } from '../data/rules.js';
 
 const log = createLogger('store');
 
@@ -17,12 +19,14 @@ const log = createLogger('store');
  * @typedef {import('../data/rules.js').Triagem} Triagem
  */
 
+/** @typedef {'white_label'|'mediquo_saude'} AppConsulta App em que o colaborador recebe a consulta. */
+
 /**
  * @typedef {Object} Agendamento
- * @property {'meet'|'app'} canal
- * @property {string[]} slotsSugeridos Horários propostos ('AAAA-MM-DDTHH:mm').
- * @property {string|null} slot        Horário confirmado.
- * @property {string|null} link        Link da videochamada (Meet) quando aplicável.
+ * @property {'whatsapp'} canal        O horário é combinado pelo WhatsApp Telessaúde.
+ * @property {AppConsulta} app
+ * @property {string[]} slotsSugeridos Horários oferecidos ('AAAA-MM-DDTHH:mm').
+ * @property {string|null} slot        Horário confirmado pelo colaborador.
  */
 
 /**
@@ -30,6 +34,14 @@ const log = createLogger('store');
  * @property {'manter'|'retorno_antecipado'|'encaminhar_mt'|'acompanhamento'} tipo
  * @property {string} recomendacaoRH Texto administrativo permitido ao RH (sem dado clínico).
  * @property {string} registradoEm   ISO date.
+ */
+
+/**
+ * @typedef {Object} Parecer
+ * @property {string} arquivoNome
+ * @property {Uint8Array|null} bytes  PDF anexado pelo médico; null nos casos da semente (gerado sob demanda).
+ * @property {'upload'|'gerado'|'seed'} origem
+ * @property {string} anexadoEm       ISO date.
  */
 
 /**
@@ -43,6 +55,7 @@ const log = createLogger('store');
  * @typedef {Object} Caso
  * @property {string} id
  * @property {string} colaboradorId
+ * @property {string} telefone        Celular com WhatsApp informado pelo RH (só dígitos).
  * @property {string} cid
  * @property {number} dias
  * @property {string} dataInicio      ISO.
@@ -57,6 +70,7 @@ const log = createLogger('store');
  * @property {Triagem} triagem
  * @property {Agendamento|null} agendamento
  * @property {Desfecho|null} desfecho
+ * @property {Parecer|null} parecer   Parecer anexado pelo médico, disponível para download no ID.
  * @property {TimelineEntry[]} timeline
  * @property {string} criadoEm ISO.
  * @property {string} enviadoPor
@@ -65,6 +79,7 @@ const log = createLogger('store');
 /**
  * @typedef {Object} NovoCasoInput
  * @property {string} colaboradorId
+ * @property {string} telefone        Celular com WhatsApp, com ou sem máscara.
  * @property {string} cid
  * @property {number|string} dias
  * @property {string} dataInicio      ISO ou DD/MM/AAAA.
@@ -110,6 +125,28 @@ const nowStamp = () => {
   return `${TODAY} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
+/** Desfecho atribuído aos casos da semente que já passaram por consulta. */
+const DESFECHO_SEMENTE = Object.freeze({ concluido: 'manter', em_acompanhamento: 'acompanhamento', encaminhado: 'encaminhar_mt' });
+
+/**
+ * Desfecho e parecer dos casos da semente (o PDF é gerado só quando o RH baixa).
+ * @param {string} id
+ * @param {string} status
+ * @param {string} dataInicio
+ * @returns {{desfecho: Desfecho|null, parecer: Parecer|null}}
+ */
+const parecerSemente = (id, status, dataInicio) => {
+  const tipo = DESFECHO_SEMENTE[status];
+  if (!tipo) return { desfecho: null, parecer: null };
+  const quando = addDays(dataInicio, 2) < TODAY ? addDays(dataInicio, 2) : TODAY;
+  return {
+    desfecho: { tipo, recomendacaoRH: DESFECHOS[tipo].rh, registradoEm: quando },
+    parecer: {
+      arquivoNome: `parecer_${id.toLowerCase()}.pdf`, bytes: null, origem: 'seed', anexadoEm: quando,
+    },
+  };
+};
+
 /** Recalcula triagem de todos os casos (reincidência depende do conjunto). */
 const retriarTodos = () => {
   state.casos.forEach((c) => { c.triagem = triar(c, state.casos); });
@@ -123,9 +160,11 @@ const seed = () => {
   state.casos = SEED_ROWS.map(([colaboradorId, cid, dias, dataInicio, status, medIdx]) => {
     const medico = MEDICOS_EMISSORES[medIdx];
     const criadoEm = addDays(dataInicio, 1);
+    const id = nextId();
     return {
-      id: nextId(),
+      id,
       colaboradorId,
+      telefone: COLAB_MAP.get(colaboradorId)?.telefone ?? '',
       cid,
       dias,
       dataInicio,
@@ -139,7 +178,7 @@ const seed = () => {
       status: /** @type {keyof STATUS} */ (status),
       triagem: /** @type {Triagem} */ ({}),
       agendamento: null,
-      desfecho: null,
+      ...parecerSemente(id, status, dataInicio),
       timeline: [{ ts: `${criadoEm} 09:12`, actor: 'rh', text: 'Atestado enviado pelo RH no ID' }],
       criadoEm,
       enviadoPor: 'RH · Joana Mendes',
@@ -150,14 +189,29 @@ const seed = () => {
 };
 
 /**
+ * Normaliza um celular brasileiro para 11 dígitos (DDD + 9 + 8 dígitos). Aceita prefixo 55.
+ * @param {string} value
+ * @returns {string|null} Dígitos ou null quando inválido.
+ */
+export const normalizarCelular = (value) => {
+  let d = digits(value);
+  if (d.length === 13 && d.startsWith('55')) d = d.slice(2);
+  if (!/^[1-9][1-9]9\d{8}$/.test(d)) return null;
+  return d;
+};
+
+/**
  * Validação de entrada (equivalente à validação server-side).
  * @param {NovoCasoInput} input
- * @returns {{ok: true, value: {colaboradorId: string, cid: string, dias: number, dataInicio: string, dataEmissao: string}} | {ok: false, errors: Object<string, string>}}
+ * @returns {{ok: true, value: {colaboradorId: string, telefone: string, cid: string, dias: number, dataInicio: string, dataEmissao: string}} | {ok: false, errors: Object<string, string>}}
  */
 export const validarNovoCaso = (input) => {
   /** @type {Object<string, string>} */
   const errors = {};
   if (!COLAB_MAP.has(input.colaboradorId)) errors.colaboradorId = 'Selecione o colaborador do atestado.';
+
+  const celular = normalizarCelular(String(input.telefone ?? ''));
+  if (!celular) errors.telefone = 'Informe o celular com WhatsApp no formato (11) 98765-4321.';
 
   // CID é opcional no envio: o RH não deve digitá-lo; a equipe médica completa na análise.
   const cidRaw = String(input.cid ?? '').trim();
@@ -175,7 +229,12 @@ export const validarNovoCaso = (input) => {
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
   const dataEmissao = (input.dataEmissao && (parseIsoDate(input.dataEmissao) ? input.dataEmissao : brToIso(input.dataEmissao))) || dataInicio;
-  return { ok: true, value: { colaboradorId: input.colaboradorId, cid: cidInfo ? cidInfo.code : '', dias, dataInicio, dataEmissao } };
+  return {
+    ok: true,
+    value: {
+      colaboradorId: input.colaboradorId, telefone: /** @type {string} */ (celular), cid: cidInfo ? cidInfo.code : '', dias, dataInicio, dataEmissao,
+    },
+  };
 };
 
 /**
@@ -204,14 +263,17 @@ export const criarCaso = (input, opts = {}) => {
     triagem: /** @type {Triagem} */ ({}),
     agendamento: null,
     desfecho: null,
-    timeline: [{ ts: nowStamp(), actor: 'rh', text: 'Atestado enviado pelo RH no ID' }],
+    parecer: null,
+    timeline: [{ ts: nowStamp(), actor: 'rh', text: 'Atestado enviado pelo RH no ID com o celular do colaborador' }],
     criadoEm: TODAY,
     enviadoPor: 'RH · Joana Mendes',
   };
   state.casos.push(caso);
   retriarTodos();
   state.focusId = caso.id;
-  log.info('Caso criado', { id: caso.id, origem: caso.origem, dias: caso.dias, elegivel: caso.triagem.elegivel });
+  log.info('Caso criado', {
+    id: caso.id, origem: caso.origem, dias: caso.dias, elegivel: caso.triagem.elegivel, telefone: caso.telefone,
+  });
   if (!opts.silent) emit();
   return { ok: true, caso };
 };
@@ -234,6 +296,43 @@ export const atualizarCaso = (id, patch, evento) => {
   log.info('Caso atualizado', { id, status: caso.status });
   emit();
   return caso;
+};
+
+/**
+ * @typedef {Object} ParecerInput
+ * @property {string} tipo                 Chave de DESFECHOS.
+ * @property {string} arquivoNome
+ * @property {Uint8Array} bytes            PDF do parecer.
+ * @property {'upload'|'gerado'} origem
+ */
+
+/**
+ * Registra o desfecho e anexa o parecer que o RH baixa no ID (validação equivalente à do servidor).
+ * @param {string} id
+ * @param {ParecerInput} input
+ * @returns {{ok: true, caso: Caso} | {ok: false, error: string}}
+ */
+export const registrarParecer = (id, input) => {
+  const caso = state.casos.find((c) => c.id === id);
+  if (!caso) return { ok: false, error: 'Caso não encontrado.' };
+  const def = DESFECHOS[input.tipo];
+  if (!def) return { ok: false, error: 'Escolha o desfecho da consulta.' };
+  if (!(input.bytes instanceof Uint8Array) || input.bytes.byteLength === 0) return { ok: false, error: 'Anexe o parecer em PDF.' };
+  if (String.fromCharCode(...input.bytes.slice(0, 5)) !== '%PDF-') return { ok: false, error: 'O parecer precisa ser um PDF válido.' };
+  if (!['upload', 'gerado'].includes(input.origem)) return { ok: false, error: 'Origem do parecer inválida.' };
+  const arquivoNome = String(input.arquivoNome ?? '').replace(/[^\w.\-À-ÿ ]/g, '').slice(0, 120) || `parecer_${id.toLowerCase()}.pdf`;
+
+  caso.status = /** @type {keyof STATUS} */ (def.status);
+  caso.desfecho = { tipo: /** @type {Desfecho['tipo']} */ (input.tipo), recomendacaoRH: def.rh, registradoEm: TODAY };
+  caso.parecer = {
+    arquivoNome, bytes: input.bytes, origem: input.origem, anexadoEm: TODAY,
+  };
+  caso.timeline.push({ ts: nowStamp(), actor: 'medico', text: `Parecer anexado no MediQuo Pro e disponível no ID (${def.label})` });
+  log.info('Parecer registrado', {
+    id, tipo: input.tipo, origem: input.origem, bytes: input.bytes.byteLength,
+  });
+  emit();
+  return { ok: true, caso };
 };
 
 /**
@@ -273,6 +372,7 @@ export const getFocusCase = () => {
   if (existing) return existing;
   const result = criarCaso({
     colaboradorId: 'col-02',
+    telefone: COLAB_MAP.get('col-02')?.telefone ?? '',
     cid: 'M54.5',
     dias: 6,
     dataInicio: '2026-10-12',

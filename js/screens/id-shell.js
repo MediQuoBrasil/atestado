@@ -3,9 +3,8 @@
  */
 
 import { esc, icon } from '../core/dom.js';
-import { listarCasos } from '../core/store.js';
 
-/** @typedef {'enviar'|'casos'} IdSub */
+/** @typedef {'enviar'|'casos'|'painel'} IdSub */
 
 /**
  * Item de menu existente (estático, igual ao ID atual).
@@ -23,7 +22,6 @@ const item = (ic, label, expand = false) => `<div class="id-nav-item">${icon(ic)
  * @returns {string}
  */
 export const idShell = (active, content) => {
-  const pendentes = listarCasos().filter((c) => c.status === 'aguardando_rh').length;
   const sub = (key, label, extra = '') => `<button type="button" class="id-sub-item ${active === key ? 'active' : ''}" data-action="id-sub" data-sub="${key}"><span class="dot"></span><span>${esc(label)}</span>${extra}</button>`;
   return `
   <div class="id-app">
@@ -46,7 +44,8 @@ export const idShell = (active, content) => {
         <div class="id-nav-item is-new open">${icon('fileHeart')}<span>Absenteísmo</span><span class="id-new-tag">novo</span></div>
         <div class="id-sub">
           ${sub('enviar', 'Enviar atestado')}
-          ${sub('casos', 'Casos', pendentes ? `<span class="count">${pendentes}</span>` : '')}
+          ${sub('casos', 'Casos')}
+          ${sub('painel', 'Painel e pareceres')}
         </div>
         ${item('chart', 'Analytics', true)}
         ${item('settings', 'Configurações', true)}

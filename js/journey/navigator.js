@@ -38,7 +38,7 @@ const log = createLogger('journey');
 /** @type {Object<string, Screen>} */
 const registry = {};
 
-const nav = { rotaId: 'meet', index: 0, cleanup: /** @type {null|function(): void} */ (null) };
+const nav = { rotaId: 'whatsapp', index: 0, cleanup: /** @type {null|function(): void} */ (null) };
 
 /**
  * Registra uma tela.

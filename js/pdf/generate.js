@@ -44,7 +44,7 @@ const dataExtenso = (iso) => {
  * Obtém o construtor do jsPDF carregado via CDN.
  * @returns {any}
  */
-const getJsPdf = () => {
+export const getJsPdf = () => {
   const ctor = window.jspdf?.jsPDF;
   if (typeof ctor !== 'function') throw new Error('jsPDF não carregou');
   return ctor;
