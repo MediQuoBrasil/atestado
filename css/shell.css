@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
-   SHELL DO PROTÓTIPO — barra de rotas, jornada e palco
-   Layout: cabeçalho compacto → trilha de etapas → nota da etapa → palco com o dispositivo.
+   SHELL DO PROTÓTIPO — barra lateral (rotas e etapas) e palco
+   Layout: lateral esquerda (título, rotas, trilha vertical numerada, ações) → palco com o dispositivo.
    Visual derivado do style.css do projeto (tema escuro, acento #491e9c, Outfit + Nunito Sans).
    As telas dos produtos (ID, Pro, App) mantêm o visual claro próprio de cada um.
    ═══════════════════════════════════════════════════════════ */
@@ -47,8 +47,8 @@ button { font: inherit; color: inherit; }
 
 .shell {
   display: grid;
-  grid-template-rows: auto auto auto 1fr;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: 196px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   height: 100%;
   min-height: 0;
   background:
@@ -56,18 +56,20 @@ button { font: inherit; color: inherit; }
     var(--c-bg);
 }
 
-/* ─── Topo ─────────────────────────────────────────────── */
+/* ─── Barra lateral ──────────────────────────────────── */
 
-.shell-top {
+.shell-side {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 6px 20px;
-  border-bottom: 1px solid var(--c-line);
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 14px 12px;
+  overflow-y: auto;
+  border-right: 1px solid var(--c-line);
+  background: rgba(20, 17, 31, 0.55);
 }
 
-.brand { display: flex; align-items: center; gap: 10px; min-width: 0; line-height: 1.25; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; line-height: 1.2; }
 .brand-mark {
   width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
   background:
@@ -83,31 +85,27 @@ button { font: inherit; color: inherit; }
   content: ''; position: absolute; inset: 11px 7px; background: #fff; border-radius: 2px;
 }
 .brand-title { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
-.brand-sub { margin: 0; font-size: 11.5px; color: var(--c-dim); }
 
 .route-switch {
   display: flex;
+  flex-direction: column;
   gap: 3px;
   padding: 3px;
-  margin-inline: auto;
   background: var(--c-surface);
   border: 1px solid var(--c-line);
   border-radius: var(--radius-sm);
-  overflow-x: auto;
-  max-width: 100%;
 }
 .route-btn {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
   text-align: left;
-  padding: 4px 10px;
+  padding: 5px 10px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   color: var(--c-muted);
   cursor: pointer;
-  white-space: nowrap;
   transition: background .2s var(--ease), color .2s var(--ease);
 }
 .route-btn:hover:not(.active) { color: var(--c-text); background: var(--c-surface-2); }
@@ -116,10 +114,10 @@ button { font: inherit; color: inherit; }
   color: #fff;
   box-shadow: 0 2px 10px rgba(73, 30, 156, 0.4);
 }
-.route-btn .rk { font-family: var(--font-display); font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
-.route-btn .rn { font-family: var(--font-display); font-weight: 600; font-size: 13px; }
+.route-btn .rk { font-family: var(--font-display); font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; opacity: .75; line-height: 1.3; }
+.route-btn .rn { font-family: var(--font-display); font-weight: 600; font-size: 13px; line-height: 1.3; }
 
-.top-actions { display: flex; gap: 8px; }
+.top-actions { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
 .chip-btn {
   border: 1.5px solid var(--c-line);
   background: var(--c-surface);
@@ -135,59 +133,37 @@ button { font: inherit; color: inherit; }
 .chip-btn:hover { border-color: var(--c-accent); }
 .chip-btn.ghost { background: transparent; color: var(--c-muted); }
 
-/* Botão de retrair rotas e etapas: seta /\ quando aberto, \/ quando retraído. */
-.collapse-btn {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 1.5px solid var(--c-line);
-  border-radius: 50%;
-  background: var(--c-surface);
-  color: var(--c-text);
-  cursor: pointer;
-  transition: border-color .2s;
-}
-.collapse-btn:hover { border-color: var(--c-accent); }
-.collapse-btn svg { transition: transform .25s var(--ease); }
-.shell.is-collapsed .collapse-btn svg { transform: rotate(180deg); }
+/* ─── Trilha de etapas: só números, em coluna ─────────── */
 
-/* ─── Trilha de etapas ─────────────────────────────────── */
-
-.journey { position: relative; padding: 8px 20px 2px; overflow-x: auto; }
+.journey { padding-left: 8px; }
 .stepper {
   list-style: none;
   margin: 0;
-  padding: 0 0 4px;
+  padding: 0;
   display: flex;
-  min-width: max-content;
-  counter-reset: step;
+  flex-direction: column;
+  gap: 10px;
 }
-.step { position: relative; flex: 1 0 130px; max-width: 220px; }
+.step { position: relative; }
 .step + .step::before {
   content: '';
   position: absolute;
-  top: 11px;
-  right: calc(50% + 15px);
-  left: calc(-50% + 15px);
-  height: 2px;
+  top: -10px;
+  left: 12px;
+  width: 2px;
+  height: 10px;
   background: var(--c-line);
 }
 .step.done + .step::before, .step.done + .step.current::before { background: var(--c-line-strong); }
 .step-btn {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  width: 100%;
-  padding: 0 6px;
+  display: block;
+  padding: 0;
   border: 0;
   background: none;
   cursor: pointer;
-  text-align: center;
 }
 .step-dot {
-  width: 24px; height: 24px;
+  width: 26px; height: 26px;
   display: grid; place-items: center;
   border-radius: 50%;
   border: 2px solid var(--actor, var(--c-accent));
@@ -195,7 +171,7 @@ button { font: inherit; color: inherit; }
   color: var(--actor);
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 11.5px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   transition: transform .25s var(--ease), background .25s, color .25s;
 }
@@ -207,22 +183,9 @@ button { font: inherit; color: inherit; }
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--actor) 22%, transparent);
 }
 .step-btn:hover .step-dot { transform: scale(1.08); }
-.step-prod { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--actor); line-height: 1.3; }
-.step-label { font-size: 12px; color: var(--c-muted); line-height: 1.25; text-wrap: balance; }
-.step.current .step-label { color: var(--c-text); font-weight: 700; }
-
-/* ─── Estado retraído: rotas só com a chave, etapas só com o número ─── */
-
-.shell.is-collapsed .brand-sub { display: none; }
-.shell.is-collapsed .route-btn { padding: 3px 9px; }
-.shell.is-collapsed .route-btn .rk { opacity: 1; }
-.shell.is-collapsed .route-btn .rn { display: none; }
-.shell.is-collapsed .journey { padding-block: 5px 1px; }
-.shell.is-collapsed .stepper { width: max-content; margin-inline: auto; }
-.shell.is-collapsed .step { flex: 0 0 48px; }
-/* Texto oculto só visualmente: continua no nome acessível do botão. */
-.shell.is-collapsed .step-prod,
-.shell.is-collapsed .step-label {
+/* Produto e rótulo ocultos só visualmente: seguem no nome acessível e no title do botão. */
+.step-prod,
+.step-label {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -237,63 +200,12 @@ button { font: inherit; color: inherit; }
 .actor-externo { --actor: var(--c-ext); }
 .actor-sistema { --actor: var(--c-accent); }
 
-/* ─── Nota da etapa ────────────────────────────────────── */
-
-.step-note {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin: 2px 20px 8px;
-  padding: 6px 12px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-line);
-  border-radius: var(--radius-md);
-}
-.note-actor {
-  flex-shrink: 0;
-  padding: 3px 10px;
-  border-radius: 99px;
-  background: color-mix(in srgb, var(--actor) 16%, transparent);
-  color: var(--actor);
-  font-family: var(--font-display);
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-}
-.note-text { flex: 1 1 320px; min-width: 0; }
-.note-title { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 14px; line-height: 1.3; }
-.note-desc { margin: 1px 0 0; color: var(--c-muted); font-size: 12.5px; line-height: 1.4; max-width: 90ch; }
-.note-nav { display: flex; gap: 8px; align-items: center; }
-.nav-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 12px;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid var(--c-line);
-  background: transparent;
-  color: var(--c-text);
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-}
-.nav-btn:hover:not(:disabled) { border-color: var(--c-accent); }
-.nav-btn:disabled { opacity: .35; cursor: not-allowed; }
-.nav-btn.primary {
-  border-color: transparent;
-  background: linear-gradient(135deg, var(--c-primary), var(--c-primary-soft));
-  color: #fff;
-  box-shadow: 0 2px 12px rgba(73, 30, 156, 0.35);
-}
-.nav-count { font-size: 12px; color: var(--c-dim); font-variant-numeric: tabular-nums; }
-
 /* ─── Palco ────────────────────────────────────────────── */
 
 .stage {
   min-height: 0;
   overflow: auto;
-  padding: 4px 20px 20px;
+  padding: 16px 20px 20px;
 }
 .stage-inner { min-height: 100%; display: flex; justify-content: center; align-items: flex-start; }
 .stage-inner.enter-fwd { animation: enterFwd .42s var(--ease) both; }
@@ -378,12 +290,24 @@ button { font: inherit; color: inherit; }
 .toast.success { border-color: #34d399; }
 
 @media (max-width: 720px) {
-  .shell-top { padding: 6px 16px; }
-  .route-switch { order: 3; margin-inline: 0; width: 100%; }
-  .journey { padding-inline: 16px; }
-  .step-note { margin-inline: 16px; }
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .shell-side {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 8px 16px;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--c-line);
+  }
+  .route-switch { order: 3; width: 100%; flex-direction: row; overflow-x: auto; }
+  .route-btn { flex-direction: row; align-items: baseline; gap: 6px; padding: 4px 10px; white-space: nowrap; }
+  .journey { order: 4; width: 100%; padding: 4px 2px; overflow-x: auto; }
+  .stepper { flex-direction: row; gap: 14px; }
+  .step + .step::before { top: 12px; left: -14px; width: 14px; height: 2px; }
+  .top-actions { flex-direction: row; margin: 0 0 0 auto; }
   .stage { padding-inline: 16px; }
-  .note-nav { width: 100%; justify-content: space-between; }
 }
 
 @media (prefers-reduced-motion: reduce) {

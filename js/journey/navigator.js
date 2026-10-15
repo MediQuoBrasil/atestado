@@ -1,5 +1,5 @@
 /**
- * @file Navegação da jornada: seletor de rotas, trilha clicável, nota da etapa, transições e frames.
+ * @file Navegação da jornada: seletor de rotas, trilha clicável, transições e frames.
  */
 
 import { delegate, esc, icon, qs } from '../core/dom.js';
@@ -73,11 +73,10 @@ const renderRouteSwitch = () => {
     </button>`).join('');
 };
 
-/** Rola a trilha horizontalmente para manter a etapa atual centralizada. */
-const centerCurrentStep = () => {
-  const cur = /** @type {HTMLElement|null} */ (qs('#stepper').querySelector('.step.current'));
-  const track = /** @type {HTMLElement} */ (qs('#stepper').parentElement);
-  if (cur) track.scrollLeft = cur.offsetLeft - track.clientWidth / 2 + cur.offsetWidth / 2;
+/** Mantém a etapa atual visível na trilha (vertical na lateral, horizontal no celular). */
+const revealCurrentStep = () => {
+  const cur = qs('#stepper').querySelector('.step.current');
+  if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 };
 
 const renderStepper = () => {
@@ -95,41 +94,7 @@ const renderStepper = () => {
         </button>
       </li>`;
   }).join('');
-  centerCurrentStep();
-};
-
-/**
- * Retrai ou expande as barras de rotas e etapas.
- * Retraído: rotas mostram só a chave ("Rota 1") e etapas só o número.
- * @param {boolean} collapsed
- */
-const setCollapsed = (collapsed) => {
-  const btn = qs('#btnCollapse');
-  const label = collapsed ? 'Expandir rotas e etapas' : 'Retrair rotas e etapas';
-  qs('#shell').classList.toggle('is-collapsed', collapsed);
-  btn.setAttribute('aria-expanded', String(!collapsed));
-  btn.setAttribute('aria-label', label);
-  btn.title = label;
-  centerCurrentStep();
-};
-
-const ATOR_LABEL = Object.freeze({ rh: 'RH · ID', medico: 'Médico · Pro', colaborador: 'Colaborador · App', externo: 'Canal externo', sistema: 'Sistema' });
-
-const renderNote = () => {
-  const rota = rotaAtual();
-  const etapa = rota.etapas[nav.index];
-  const last = nav.index === rota.etapas.length - 1;
-  qs('#stepNote').innerHTML = `
-    <span class="note-actor actor-${esc(etapa.actor)}">${esc(ATOR_LABEL[etapa.actor])}</span>
-    <div class="note-text">
-      <p class="note-title">${esc(etapa.titulo)}</p>
-      <p class="note-desc">${esc(etapa.nota)}</p>
-    </div>
-    <div class="note-nav">
-      <button type="button" class="nav-btn" data-action="prev" ${nav.index === 0 ? 'disabled' : ''}>${icon('chevronLeft', 'ic-sm')} Anterior</button>
-      <span class="nav-count">${nav.index + 1} / ${rota.etapas.length}</span>
-      <button type="button" class="nav-btn primary" data-action="next" ${last ? 'disabled' : ''}>Próxima ${icon('chevronRight', 'ic-sm')}</button>
-    </div>`;
+  revealCurrentStep();
 };
 
 /**
@@ -230,7 +195,6 @@ const goToIndex = (index) => {
   nav.index = index;
   log.info('Etapa', { rota: nav.rotaId, etapa: rotaAtual().etapas[index].id });
   renderStepper();
-  renderNote();
   renderStage(direction);
   syncHash();
 };
@@ -247,7 +211,6 @@ const setRota = (rotaId) => {
   nav.index = idx >= 0 ? idx : 0;
   renderRouteSwitch();
   renderStepper();
-  renderNote();
   renderStage('fwd');
   syncHash();
 };
@@ -260,7 +223,6 @@ export const initNavigator = (hooks) => {
   readHash();
   renderRouteSwitch();
   renderStepper();
-  renderNote();
   renderStage('fwd');
   syncHash();
 
@@ -268,16 +230,12 @@ export const initNavigator = (hooks) => {
   delegate(shell, 'click', {
     rota: (el) => setRota(el.dataset.rota),
     step: (el) => goToIndex(Number(el.dataset.index)),
-    prev: () => goToIndex(nav.index - 1),
-    next: () => goToIndex(nav.index + 1),
   });
   qs('#btnCompare').addEventListener('click', () => hooks.onCompare(nav.rotaId));
-  qs('#btnCollapse').addEventListener('click', () => setCollapsed(!shell.classList.contains('is-collapsed')));
   qs('#btnReset').addEventListener('click', () => {
     hooks.onReset();
     nav.index = 0;
     renderStepper();
-    renderNote();
     renderStage('back');
     syncHash();
   });

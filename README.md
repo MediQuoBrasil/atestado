@@ -27,7 +27,7 @@ Também funciona em qualquer hospedagem estática (GitHub Pages, Vercel, Netlify
 | 2 | App + push | Push no celular, agendamento no app e botão "Iniciar consulta". | Médio · 6–9 semanas |
 | 3 | Esteira automatizada | Triagem por regra, convite por WhatsApp com prazo, Medicina do Trabalho e indicadores agregados para o RH. | Alto · 3–4 meses (futuro) |
 
-A barra de etapas no topo é clicável, e as setas do teclado também navegam. O estado é compartilhado entre as telas: o que o RH envia aparece no Pro, e o que o colaborador agenda aparece no ID.
+As rotas e a trilha de etapas (só números) ficam na barra lateral esquerda; os números são clicáveis, e as setas do teclado também navegam. O estado é compartilhado entre as telas: o que o RH envia aparece no Pro, e o que o colaborador agenda aparece no ID.
 
 ## Leitura do atestado em PDF
 
@@ -48,7 +48,7 @@ As regras de validação e triagem rodam no navegador apenas para simular o prod
 ## Estrutura
 
 ```
-index.html            Shell do protótipo (rotas, trilha de etapas, palco)
+index.html            Shell do protótipo (lateral com rotas e etapas, palco)
 css/
   shell.css           Moldura do protótipo (tema escuro)
   frames.css          Frames de navegador e celular

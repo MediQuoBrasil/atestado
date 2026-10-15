@@ -16,29 +16,20 @@
 </head>
 <body>
 <div class="shell" id="shell">
-  <header class="shell-top">
+  <aside class="shell-side">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true"></span>
-      <div class="brand-text">
-        <p class="brand-title">Gestão de Absenteísmo</p>
-        <p class="brand-sub">Protótipo de jornada · dados fictícios · sem backend</p>
-      </div>
+      <p class="brand-title">Gestão de Absenteísmo</p>
     </div>
     <nav class="route-switch" id="routeSwitch" aria-label="Rotas da jornada"></nav>
+    <section class="journey" aria-label="Etapas da jornada">
+      <ol class="stepper" id="stepper"></ol>
+    </section>
     <div class="top-actions">
       <button type="button" class="chip-btn" id="btnCompare">Comparar rotas</button>
       <button type="button" class="chip-btn ghost" id="btnReset" title="Restaurar dados de exemplo">Reiniciar</button>
-      <button type="button" class="collapse-btn" id="btnCollapse" aria-expanded="true" aria-controls="routeSwitch stepper" aria-label="Retrair rotas e etapas" title="Retrair rotas e etapas">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="ic-sm" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
-      </button>
     </div>
-  </header>
-
-  <section class="journey" aria-label="Etapas da jornada">
-    <ol class="stepper" id="stepper"></ol>
-  </section>
-
-  <section class="step-note" id="stepNote" aria-live="polite"></section>
+  </aside>
 
   <main class="stage" id="stage">
     <div class="stage-inner" id="stageInner"></div>
