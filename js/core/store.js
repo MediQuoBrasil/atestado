@@ -19,7 +19,7 @@ const log = createLogger('store');
 
 /**
  * @typedef {Object} Agendamento
- * @property {'meet'|'app'|'whatsapp'} canal
+ * @property {'meet'|'app'} canal
  * @property {string[]} slotsSugeridos Horários propostos ('AAAA-MM-DDTHH:mm').
  * @property {string|null} slot        Horário confirmado.
  * @property {string|null} link        Link da videochamada (Meet) quando aplicável.

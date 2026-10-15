@@ -1,18 +1,17 @@
 /**
- * @file ID · Absenteísmo › Casos. Modos: status (Rota 0), agendar via Meet (Rota 1),
- * devolutiva (Rotas 1 e 2) e indicadores agregados (Rota 3). O RH nunca vê CID ou nota clínica.
+ * @file ID · Absenteísmo › Casos. Modos: status (Rota 0), agendar via Meet (Rota 1)
+ * e devolutiva (Rotas 1 e 2). O RH nunca vê CID ou nota clínica.
  */
 
 import { delegate, esc, icon } from '../core/dom.js';
 import { createLogger } from '../core/logger.js';
 import {
-  addDays, fmtCnpj, fmtDate, fmtMonth, fmtSlot, plural,
+  addDays, fmtCnpj, fmtDate, fmtSlot, plural,
 } from '../core/format.js';
 import {
-  STATUS, TODAY, atualizarCaso, empresaDoCaso, getColaborador, getFocusCase, listarCasos,
+  STATUS, atualizarCaso, empresaDoCaso, getColaborador, getFocusCase, listarCasos,
 } from '../core/store.js';
-import { EMPRESAS } from '../data/seed.js';
-import { DESFECHOS, CRITERIOS, contarReincidencia } from '../data/rules.js';
+import { DESFECHOS } from '../data/rules.js';
 import { idHeader, idShell } from './id-shell.js';
 import { handleIdSub } from './id-nav.js';
 
@@ -164,56 +163,10 @@ const modoDevolutiva = (caso, ctx) => {
     ${tabelaCasos(caso.id)}`;
 };
 
-/**
- * Barras horizontais.
- * @param {Array<{label: string, value: number}>} rows
- * @param {string} [suffix='']
- * @returns {string}
- */
-const bars = (rows, suffix = '') => {
-  const max = Math.max(1, ...rows.map((r) => r.value));
-  return `<div class="id-bars">${rows.map((r) => `<div class="id-bar"><span class="lab" title="${esc(r.label)}">${esc(r.label)}</span><span class="track"><span class="fill" style="width:${(r.value / max) * 100}%"></span></span><span class="val">${r.value}${suffix}</span></div>`).join('')}</div>`;
-};
-
-/**
- * Modo indicadores agregados (Rota 3).
- * @param {import('../core/store.js').Caso} caso
- * @returns {string}
- */
-const modoIndicadores = (caso) => {
-  const casos = listarCasos();
-  const diasTotais = casos.reduce((acc, c) => acc + c.dias, 0);
-  const media = (diasTotais / casos.length).toFixed(1);
-  const acompanhados = casos.filter((c) => c.triagem.elegivel).length;
-  const reincidentes = new Set(casos.filter((c) => contarReincidencia(casos, c.colaboradorId, TODAY) >= CRITERIOS.reincidenciaMinima).map((c) => c.colaboradorId)).size;
-  /** @type {Map<string, number>} */
-  const porMes = new Map();
-  casos.forEach((c) => porMes.set(c.dataInicio.slice(0, 7), (porMes.get(c.dataInicio.slice(0, 7)) ?? 0) + c.dias));
-  const meses = [...porMes.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([k, v]) => ({ label: fmtMonth(k), value: v }));
-  const porEmpresa = EMPRESAS.map((e) => ({ label: e.razao.replace(/ (S\.A\.|Ltda\.)$/, ''), value: casos.filter((c) => empresaDoCaso(c)?.id === e.id).length }));
-  const statusRows = ['em_acompanhamento', 'encaminhado', 'concluido', 'contato_pendente', 'registrado'].map((s) => ({ label: STATUS[s].label, value: casos.filter((c) => c.status === s).length }));
-  return `
-    <div class="id-kpis">
-      <div class="id-card id-kpi"><p class="l">Atestados no período</p><p class="v">${casos.length}</p><p class="s">jun–out/2026</p></div>
-      <div class="id-card id-kpi"><p class="l">Dias de afastamento</p><p class="v">${diasTotais}</p><p class="s">média ${media} por atestado</p></div>
-      <div class="id-card id-kpi"><p class="l">Em acompanhamento ativo</p><p class="v">${Math.round((acompanhados / casos.length) * 100)}%</p><p class="s">${acompanhados} casos elegíveis</p></div>
-      <div class="id-card id-kpi"><p class="l">Recorrência</p><p class="v">${reincidentes}</p><p class="s">colaboradores com ≥ ${CRITERIOS.reincidenciaMinima} atestados em 90 dias</p></div>
-    </div>
-    <div class="id-grid-2">
-      <div class="id-card"><div class="id-card-head"><div><h2 class="id-card-title">Dias de afastamento por mês</h2><p class="id-card-desc">Soma dos dias dos atestados iniciados no mês</p></div></div><div class="id-card-body">${bars(meses, ' d')}</div></div>
-      <div class="id-card"><div class="id-card-head"><div><h2 class="id-card-title">Atestados por CNPJ</h2><p class="id-card-desc">Empresas vinculadas a este RH</p></div></div><div class="id-card-body">${bars(porEmpresa)}</div></div>
-    </div>
-    <div class="id-grid-2">
-      <div class="id-card"><div class="id-card-head"><div><h2 class="id-card-title">Desfechos e status</h2><p class="id-card-desc">Nenhum diagnóstico é exibido nesta visão</p></div></div><div class="id-card-body">${bars(statusRows)}</div></div>
-      <div class="id-card"><div class="id-card-head"><div><h2 class="id-card-title">Caso acompanhado</h2><p class="id-card-desc">SLA de primeiro contato: 24h úteis</p></div>${pill(caso.status)}</div><div class="id-card-body" style="display:grid;gap:1rem">${resumoCaso(caso)}${caso.desfecho ? `<div class="id-note">${icon('shield', 'ic-sm')}<span>${esc(caso.desfecho.recomendacaoRH)}</span></div>` : ''}</div></div>
-    </div>`;
-};
-
 const TITULOS = Object.freeze({
   status: ['Casos', 'Acompanhe o status dos atestados enviados.'],
   agendar: ['Casos · Agenda', 'Confirme horários pedidos pela equipe médica e informe o link da consulta.'],
   devolutiva: ['Casos · Devolutiva', 'Recomendações administrativas da equipe médica.'],
-  indicadores: ['Indicadores de absenteísmo', 'Visão agregada para gestão. Sem dados individuais de saúde.'],
 });
 
 /**
@@ -227,9 +180,8 @@ const render = (ctx) => {
   let content = '';
   if (modo === 'agendar') content = modoAgendar(caso);
   else if (modo === 'devolutiva') content = modoDevolutiva(caso, ctx);
-  else if (modo === 'indicadores') content = modoIndicadores(caso);
   else content = modoStatus(caso);
-  return idShell(modo === 'indicadores' ? 'indicadores' : 'casos', `${idHeader(t, lead)}${content}`, { showIndicadores: ctx.rota.id === 'esteira' });
+  return idShell('casos', `${idHeader(t, lead)}${content}`);
 };
 
 /**
@@ -299,7 +251,7 @@ const bind = (root, ctx) => {
 /** @type {import('../journey/navigator.js').Screen} */
 export const idCasosScreen = {
   frame: 'desktop',
-  url: (ctx) => `id.mediquo.com.br/absenteismo/${ctx.params.modo === 'indicadores' ? 'indicadores' : 'casos'}`,
+  url: () => 'id.mediquo.com.br/absenteismo/casos',
   render,
   bind,
 };

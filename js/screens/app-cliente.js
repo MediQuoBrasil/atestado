@@ -40,17 +40,14 @@ const historico = () => `
  * @param {boolean} comBotao Exibe o botão "Iniciar consulta".
  * @returns {string}
  */
-const cardProxima = (caso, comBotao) => {
-  const viaWhats = caso.timeline.some((t) => t.text.includes('WhatsApp') && t.actor === 'colaborador');
-  return `
+const cardProxima = (caso, comBotao) => `
     <p class="app-section">Próximos</p>
     <div class="app-card">
       <div class="row"><span class="doc">${esc(MEDICA)}</span><span class="app-pill ${comBotao ? 'green' : 'purple'}">${comBotao ? 'Começa agora' : 'Agendada'}</span></div>
       <div class="when">${icon('calendar', 'ic-sm')} ${esc(fmtSlot(caso.agendamento?.slot ?? ''))}</div>
-      <div class="reason">Avaliação de afastamento · Clínica geral${viaWhats ? ' · confirmada pelo WhatsApp' : ''}</div>
+      <div class="reason">Avaliação de afastamento · Clínica geral</div>
       ${comBotao ? `<button type="button" class="app-btn go" data-action="iniciar">${icon('video', 'ic-sm')} Iniciar consulta</button>` : `<div class="app-note">${icon('bell', 'ic-sm')}<span>Você recebe um lembrete 1 hora antes. O botão para entrar aparece no horário.</span></div>`}
     </div>`;
-};
 
 /**
  * Convite pendente com escolha de horário.
@@ -134,7 +131,7 @@ const bindApp = (root, ctx) => delegate(root, 'click', {
     ctx.next();
   },
   'voltar-convite': () => {
-    const step = ctx.rota.etapas.find((e) => e.screen === 'pro-caso' || e.screen === 'whatsapp');
+    const step = ctx.rota.etapas.find((e) => e.screen === 'pro-caso');
     if (step) ctx.goTo(step.id);
   },
 });
@@ -178,13 +175,12 @@ export const appPushScreen = {
 export const appAgendaScreen = {
   frame: 'phone',
   render: () => telaAgenda(getFocusCase(), false),
-  side: (ctx) => `
-    <h3>${ctx.params.origem === 'whatsapp' ? 'Consulta vinda do WhatsApp' : 'Agendamento no app'}</h3>
+  side: () => `
+    <h3>Agendamento no app</h3>
     <ul>
       <li>Reaproveita a tela Agendamento atual, com um card de convite no topo.</li>
       <li>Horários vêm da agenda do médico no MediQuo Pro, reservados por 24h.</li>
       <li>Ao confirmar, o status muda para "Consulta agendada" no Pro e no ID.</li>
-      ${ctx.params.origem === 'whatsapp' ? '<li>O horário escolhido no WhatsApp já aparece aqui, sem novo passo para o colaborador.</li>' : ''}
     </ul>`,
   bind: bindApp,
 };

@@ -14,7 +14,7 @@ import { proDashboardScreen } from './screens/pro-dashboard.js';
 import { proCasoScreen } from './screens/pro-caso.js';
 import { proConsultaScreen } from './screens/pro-consulta.js';
 import { appAgendaScreen, appConsultaScreen, appPushScreen } from './screens/app-cliente.js';
-import { meetScreen, whatsappScreen } from './screens/canais.js';
+import { meetScreen } from './screens/canais.js';
 
 const log = createLogger('main');
 
@@ -37,7 +37,6 @@ const boot = () => {
   registerScreen('app-agenda', appAgendaScreen);
   registerScreen('app-consulta', appConsultaScreen);
   registerScreen('meet', meetScreen);
-  registerScreen('whatsapp', whatsappScreen);
 
   initOverlays();
   initNavigator({

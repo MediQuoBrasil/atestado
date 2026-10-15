@@ -5,7 +5,7 @@
 import { esc, icon } from '../core/dom.js';
 import { listarCasos } from '../core/store.js';
 
-/** @typedef {'enviar'|'casos'|'indicadores'} IdSub */
+/** @typedef {'enviar'|'casos'} IdSub */
 
 /**
  * Item de menu existente (estático, igual ao ID atual).
@@ -20,10 +20,9 @@ const item = (ic, label, expand = false) => `<div class="id-nav-item">${icon(ic)
  * Sidebar + conteúdo.
  * @param {IdSub} active
  * @param {string} content Markup já escapado.
- * @param {{showIndicadores?: boolean}} [opts]
  * @returns {string}
  */
-export const idShell = (active, content, opts = {}) => {
+export const idShell = (active, content) => {
   const pendentes = listarCasos().filter((c) => c.status === 'aguardando_rh').length;
   const sub = (key, label, extra = '') => `<button type="button" class="id-sub-item ${active === key ? 'active' : ''}" data-action="id-sub" data-sub="${key}"><span class="dot"></span><span>${esc(label)}</span>${extra}</button>`;
   return `
@@ -48,7 +47,6 @@ export const idShell = (active, content, opts = {}) => {
         <div class="id-sub">
           ${sub('enviar', 'Enviar atestado')}
           ${sub('casos', 'Casos', pendentes ? `<span class="count">${pendentes}</span>` : '')}
-          ${opts.showIndicadores ? sub('indicadores', 'Indicadores') : ''}
         </div>
         ${item('chart', 'Analytics', true)}
         ${item('settings', 'Configurações', true)}

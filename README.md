@@ -2,6 +2,7 @@
 
 Protótipo navegável (somente front-end, sem backend) da jornada de acompanhamento de atestados:
 o RH envia o atestado no **ID**, a equipe médica acompanha no **MediQuo Pro** e o colaborador é atendido pelo **App MediQuo**.
+Na Rota 2, a videochamada acontece no **MediQuo Pro (Espanha)** (PEP, `web.mediquo.com/chat`), como nos atendimentos de hoje; o protótipo mostra a lista de agendamentos no MediQuo Pro e o pedido para atender por lá.
 
 Todos os dados são fictícios. Nenhum nome, CPF ou CNPJ corresponde a pessoa ou empresa real.
 
@@ -24,8 +25,7 @@ Também funciona em qualquer hospedagem estática (GitHub Pages, Vercel, Netlify
 |---|---|---|---|
 | 0 | Registro e triagem | RH envia, médico valida o documento. Sem consulta. | Baixo · 2–3 semanas |
 | 1 | Meet via RH | Médico propõe horários, RH marca e cola o link do Google Meet. | Baixo · 3–5 semanas |
-| 2 | App + push | Push no celular, agendamento no app e botão "Iniciar consulta". | Médio · 6–9 semanas |
-| 3 | Esteira automatizada | Triagem por regra, convite por WhatsApp com prazo, Medicina do Trabalho e indicadores agregados para o RH. | Alto · 3–4 meses (futuro) |
+| 2 | App + push | Push no celular, agendamento no app, atendimento pelo MediQuo Pro (Espanha) e desfecho no MediQuo Pro. | Médio · 6–9 semanas |
 
 As rotas e a trilha de etapas (só números) ficam na barra lateral esquerda; os números são clicáveis, e as setas do teclado também navegam. O estado é compartilhado entre as telas: o que o RH envia aparece no Pro, e o que o colaborador agenda aparece no ID.
 
@@ -54,14 +54,14 @@ css/
   frames.css          Frames de navegador e celular
   id.css              Visual do ID
   pro.css             Visual do MediQuo Pro
-  app.css             App, tela bloqueada, chat e videochamada simulados
+  app.css             App, tela bloqueada e videochamada simulados
 js/
   main.js             Registro das telas e inicialização
   core/               DOM e escape, formatação, logger, estado em memória
   data/               Dados fictícios, dicionário de CID e regras de triagem
   pdf/                Extração (PDF.js), parser e gerador de atestados (jsPDF)
   journey/            Definição das rotas, navegação e comparativo
-  screens/            Telas do ID, Pro, App, Meet e WhatsApp
+  screens/            Telas do ID, Pro, App e Meet
   ui/                 Toast, overlays e visualizador de PDF
 vendor/
   pdf.worker.min.js   Worker do PDF.js 3.11.174

@@ -110,17 +110,6 @@ const filtrar = (linhas) => {
 const recur = (n) => `<span class="recur ${n >= CRITERIOS.reincidenciaMinima ? 'hot' : ''}" title="${n} atestado(s) nos últimos ${CRITERIOS.janelaReincidenciaDias} dias">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}<b>${n}</b></span>`;
 
 /**
- * SLA de primeiro contato (24h após o envio).
- * @param {import('../core/store.js').Caso} c
- * @returns {string}
- */
-const sla = (c) => {
-  if (!['contato_pendente', 'em_analise', 'registrado'].includes(c.status) || !c.triagem.elegivel) return '<span class="sla">—</span>';
-  const atraso = diffDays(c.criadoEm, TODAY);
-  return atraso >= 1 ? `<span class="sla late">${plural(atraso, 'dia', 'dias')} em atraso</span>` : '<span class="sla">vence em 24h</span>';
-};
-
-/**
  * Barras por grupo de CID.
  * @param {Linha[]} linhas
  * @returns {string}
@@ -150,12 +139,10 @@ const chartMeses = (linhas) => {
 };
 
 /**
- * @param {import('../journey/navigator.js').ScreenCtx} ctx
+ * Painel de absenteísmo do médico.
  * @returns {string}
  */
-const render = (ctx) => {
-  const esteira = ctx.params.variante === 'esteira';
-  if (esteira && filtros.ordem === 'recentes') filtros.ordem = 'prioridade';
+const render = () => {
   const focusId = getFocusCase().id;
   const todas = montarLinhas();
   const linhas = filtrar(todas);
@@ -209,7 +196,6 @@ const render = (ctx) => {
         <td class="num"><b>${esc(plural(c.dias, 'dia', 'dias'))}</b><span class="sub">${esc(fmtDate(c.dataInicio))} → ${esc(fmtDate(addDays(c.dataInicio, c.dias - 1)))}</span></td>
         <td class="num">${l.totalAtestados}<span class="sub">${esc(plural(l.consultas, 'consulta', 'consultas'))}</span></td>
         <td>${recur(l.reinc90)}</td>
-        ${esteira ? `<td><span class="prio ${esc(c.triagem.prioridade)}">${esc(c.triagem.prioridade)}</span></td><td>${sla(c)}</td>` : ''}
         <td><span class="badge ${STATUS[c.status].tone}">${esc(STATUS[c.status].label)}</span></td>
       </tr>`;
   }).join('');
@@ -218,8 +204,8 @@ const render = (ctx) => {
     <div class="pro-card">
       <div class="pro-table-wrap" data-scroll-key="pro-table">
         <table class="pro-table">
-          <thead><tr><th>Paciente</th><th>CNPJ vinculado</th><th>Atestado</th><th>CID</th><th>Tempo de atestado</th><th>Atestados</th><th>Reincidência 90d</th>${esteira ? '<th>Prioridade</th><th>SLA contato</th>' : ''}<th>Status</th></tr></thead>
-          <tbody>${rows || `<tr><td colspan="${esteira ? 10 : 8}" class="pro-empty">Nenhum atestado para os filtros atuais.</td></tr>`}</tbody>
+          <thead><tr><th>Paciente</th><th>CNPJ vinculado</th><th>Atestado</th><th>CID</th><th>Tempo de atestado</th><th>Atestados</th><th>Reincidência 90d</th><th>Status</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="8" class="pro-empty">Nenhum atestado para os filtros atuais.</td></tr>'}</tbody>
         </table>
       </div>
       <div class="pro-foot"><span>${linhas.length} de ${todas.length} atestados</span><span>Clique na linha para abrir o caso · no PDF para ver o atestado</span></div>
@@ -227,7 +213,7 @@ const render = (ctx) => {
 
   return proShell({
     title: 'Absenteísmo',
-    subtitle: esteira ? 'Fila priorizada pela triagem automática, com prazo de primeiro contato.' : 'Atestados enviados pelo RH dos clientes, recorrência e acompanhamento clínico.',
+    subtitle: 'Atestados enviados pelo RH dos clientes, recorrência e acompanhamento clínico.',
     content: `${kpis}${charts}${filtrosHtml}${tabela}`,
   });
 };
@@ -244,7 +230,7 @@ const bind = (root, ctx) => {
     const active = /** @type {HTMLElement|null} */ (document.activeElement);
     const activeId = active && root.contains(active) ? active.id : '';
     const caret = active instanceof HTMLInputElement && active.type === 'text' ? active.selectionStart : null;
-    root.querySelector('.device-viewport').innerHTML = render(ctx);
+    root.querySelector('.device-viewport').innerHTML = render();
     const nextMain = root.querySelector('.pro-main');
     if (nextMain) nextMain.scrollTop = top;
     if (activeId) {

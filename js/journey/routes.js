@@ -158,51 +158,13 @@ export const ROTAS = Object.freeze([
       },
       {
         id: 'consulta', screen: 'pro-consulta', params: { canal: 'app' }, actor: 'medico', produto: 'MediQuo Pro',
-        label: 'Consulta e desfecho', titulo: 'Médico atende e registra o desfecho',
-        nota: 'A videoconsulta acontece dentro da MediQuo. O desfecho atualiza o ID automaticamente.',
+        label: 'Atende pelo Pro (Espanha)', titulo: 'Agendamentos no Pro e atendimento pelo MediQuo Pro (Espanha)',
+        nota: 'A consulta marcada aparece na lista de agendamentos do MediQuo Pro. A videochamada acontece no MediQuo Pro (Espanha), no chat do paciente, como já é feito hoje. Depois do atendimento, o médico registra o desfecho aqui e o ID é atualizado.',
       },
       {
         id: 'devolutiva', screen: 'id-casos', params: { modo: 'devolutiva' }, actor: 'rh', produto: 'ID',
         label: 'RH recebe devolutiva', titulo: 'Devolutiva estruturada no ID',
         nota: 'Status ocupacional e datas, sem dados clínicos.',
-      },
-    ],
-  },
-  {
-    id: 'esteira',
-    chave: 'Rota 3',
-    nome: 'Esteira automatizada',
-    esforco: 5,
-    prazo: '3–4 meses',
-    resumo: 'Proposta futura: triagem automática por regra, convite clínico por WhatsApp com SLA, autoagendamento, encaminhamento para Medicina do Trabalho e painel de indicadores agregados para o RH.',
-    construir: ['Tudo da Rota 2', 'Motor de regras de elegibilidade por empresa', 'Bot de WhatsApp com tentativas e SLA', 'Fluxo de avaliação ocupacional', 'Indicadores agregados e alertas para o RH'],
-    reaproveita: ['Notificações WhatsApp do roteamento de tickets', 'Radar+ para cruzar riscos psicossociais (NR-01)'],
-    riscos: ['Validação jurídica (CFM, LGPD, trabalhista) antes de automatizar recomendações', 'Custo de WhatsApp Business por conversa', 'Risco de percepção punitiva se a comunicação falhar'],
-    etapas: [
-      { ...ENVIO, params: { triagem: '1' }, label: 'Envio + triagem automática', nota: `${ENVIO.nota} A regra de elegibilidade roda no envio e define prioridade.` },
-      {
-        id: 'whatsapp', screen: 'whatsapp', actor: 'externo', produto: 'WhatsApp',
-        label: 'Convite clínico no WhatsApp', titulo: 'Convite clínico automático por WhatsApp',
-        nota: 'O colaborador recebe o convite e escolhe um horário respondendo à mensagem. Sem resposta, o sistema tenta de novo dentro do SLA.',
-      },
-      {
-        id: 'agendar', screen: 'app-agenda', params: { origem: 'whatsapp' }, actor: 'colaborador', produto: 'App MediQuo',
-        label: 'Consulta confirmada no app', titulo: 'Consulta confirmada aparece no app',
-        nota: 'O horário escolhido no WhatsApp já aparece no app, com lembrete automático.',
-      },
-      painelPro({
-        id: 'painel', params: { variante: 'esteira' }, label: 'Painel com prioridade e SLA', titulo: 'Painel com prioridade, SLA e motivo da triagem',
-        nota: 'A lista ordena por prioridade e mostra o prazo de contato. Os motivos da triagem são objetivos e iguais para todos.',
-      }),
-      {
-        id: 'consulta', screen: 'pro-consulta', params: { canal: 'app', ocupacional: '1' }, actor: 'medico', produto: 'MediQuo Pro',
-        label: 'Consulta e Medicina do Trabalho', titulo: 'Consulta com opção de encaminhamento ocupacional',
-        nota: 'Quando há possibilidade de retorno antecipado, o caso segue para a Medicina do Trabalho, que decide aptidão.',
-      },
-      {
-        id: 'indicadores', screen: 'id-casos', params: { modo: 'indicadores' }, actor: 'rh', produto: 'ID',
-        label: 'RH vê indicadores', titulo: 'Indicadores agregados para o RH',
-        nota: 'Volume, recorrência, tempo médio de afastamento e desfechos, sempre agregados.',
       },
     ],
   },

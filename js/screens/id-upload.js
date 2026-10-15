@@ -6,10 +6,9 @@ import { delegate, esc, icon, qs } from '../core/dom.js';
 import { createLogger } from '../core/logger.js';
 import { fmtCnpj, fmtDate, plural } from '../core/format.js';
 import {
-  STATUS, atualizarCaso, criarCaso, empresaDoCaso, getColaborador, getEmpresa, listarCasos,
+  STATUS, criarCaso, empresaDoCaso, getColaborador, getEmpresa, listarCasos,
 } from '../core/store.js';
 import { COLABORADORES, EMPRESAS, MEDICOS_EMISSORES } from '../data/seed.js';
-import { triar } from '../data/rules.js';
 import { PdfError, extrairTexto, lerArquivoPdf } from '../pdf/extract.js';
 import { matchColaborador, parseAtestado } from '../pdf/parse.js';
 import { gerarAtestadoPdf } from '../pdf/generate.js';
@@ -134,27 +133,10 @@ const renderFileBox = () => (ui.file ? `
   ${ui.phase !== 'processing' ? '<button type="button" class="id-btn outline sm" data-action="trocar">Trocar arquivo</button>' : ''}</div>` : '');
 
 /**
- * Prévia da triagem automática (Rota 3).
- * @returns {string}
- */
-const renderTriagemPreview = () => {
-  const f = ui.form;
-  if (!f || !f.colaboradorId) return '';
-  const atual = { colaboradorId: f.colaboradorId, cid: f.cid, dias: Number(f.dias) || 0, dataInicio: f.dataInicio };
-  const t = triar(atual, [...listarCasos(), atual]);
-  return `
-    <div class="id-triage">
-      <h4>${icon('wand', 'ic-sm')} Triagem automática <span class="pill ${t.elegivel ? (t.prioridade === 'alta' ? 'alert' : 'warn') : 'neutral'}">${t.elegivel ? `Elegível · prioridade ${t.prioridade}` : 'Apenas registro'}</span></h4>
-      <ul>${(t.motivos.length ? t.motivos : ['Nenhum critério de entrada atingido']).map((m) => `<li>${esc(m)}</li>`).join('')}</ul>
-    </div>`;
-};
-
-/**
  * Formulário de revisão do RH.
- * @param {import('../journey/navigator.js').ScreenCtx} ctx
  * @returns {string}
  */
-const renderReview = (ctx) => {
+const renderReview = () => {
   const f = /** @type {FormValues} */ (ui.form);
   const x = ui.extraido;
   const e = ui.errors;
@@ -192,7 +174,6 @@ const renderReview = (ctx) => {
           <div class="id-masked">${icon('lock', 'ic-sm')}${f.cid ? 'CID identificado no documento. Visível apenas para a equipe médica.' : 'CID não identificado. A equipe médica completa na análise.'}</div>
         </div>
       </div>
-      ${ctx.params.triagem ? renderTriagemPreview() : ''}
       ${ui.text ? `<details class="id-details"><summary>Texto lido do PDF (${ui.text.length} caracteres, CID ocultado)</summary><pre>${textoRedigido(ui.text)}</pre></details>` : ''}
       <label class="id-check"><input type="checkbox" id="fCiente" data-field="ciente" ${f.ciente ? 'checked' : ''}><span>Confirmo que o colaborador foi informado de que a MediQuo fará contato para acompanhamento clínico, conforme a política de privacidade da empresa.</span></label>
       ${e.ciente ? `<span class="id-err">${esc(e.ciente)}</span>` : ''}
@@ -223,7 +204,6 @@ const renderDone = (ctx) => {
         <dt>Período</dt><dd>${esc(fmtDate(caso.dataInicio))} · ${esc(plural(caso.dias, 'dia', 'dias'))}</dd>
         <dt>Status</dt><dd><span class="pill ${STATUS[caso.status].tone}">${esc(STATUS[caso.status].label)}</span></dd>
       </dl>
-      ${ctx.params.triagem ? renderTriagemPreview() : ''}
       <div class="id-actions">
         ${proxima ? `<button type="button" class="id-btn" data-action="next">${esc(proxima.label)} ${icon('chevronRight', 'ic-sm')}</button>` : ''}
         <button type="button" class="id-btn outline" data-action="trocar">Enviar outro atestado</button>
@@ -256,7 +236,7 @@ const renderRecentes = () => {
  */
 const render = (ctx) => {
   let right = '';
-  if (ui.phase === 'review') right = renderReview(ctx);
+  if (ui.phase === 'review') right = renderReview();
   else if (ui.phase === 'done') right = renderDone(ctx);
   else if (ui.phase === 'processing') right = '<div class="id-empty">Lendo o atestado…</div>';
   else right = `<div class="id-empty">${icon('fileText', 'ic-big')}<p>Os dados do atestado aparecem aqui para conferência antes do envio.</p></div>`;
@@ -273,7 +253,7 @@ const render = (ctx) => {
       </div>
     </div>
     ${renderRecentes()}`;
-  return idShell('enviar', content, { showIndicadores: ctx.rota.id === 'esteira' });
+  return idShell('enviar', content);
 };
 
 /**
@@ -367,13 +347,6 @@ const enviar = (ctx, rerender) => {
   ui.errors = {};
   ui.createdId = result.caso.id;
   ui.phase = 'done';
-  if (ctx.params.triagem) {
-    const { triagem } = result.caso;
-    atualizarCaso(result.caso.id, { status: triagem.elegivel ? 'contato_pendente' : 'registrado' }, {
-      actor: 'sistema',
-      text: triagem.elegivel ? `Triagem automática: elegível, prioridade ${triagem.prioridade}. Convite clínico enviado por WhatsApp.` : 'Triagem automática: apenas registro.',
-    });
-  }
   ctx.toast('Atestado enviado para a equipe médica.', 'success');
   rerender();
 };
@@ -436,7 +409,7 @@ const bind = (root, ctx) => {
     const field = el.dataset?.field;
     if (!field || !ui.form) return;
     ui.form[field] = el.type === 'checkbox' ? el.checked : el.value;
-    if (field === 'colaboradorId' || ctx.params.triagem) rerender();
+    if (field === 'colaboradorId') rerender();
   };
   const onInput = (event) => {
     const el = /** @type {HTMLInputElement} */ (event.target);
