@@ -73,6 +73,13 @@ const renderRouteSwitch = () => {
     </button>`).join('');
 };
 
+/** Rola a trilha horizontalmente para manter a etapa atual centralizada. */
+const centerCurrentStep = () => {
+  const cur = /** @type {HTMLElement|null} */ (qs('#stepper').querySelector('.step.current'));
+  const track = /** @type {HTMLElement} */ (qs('#stepper').parentElement);
+  if (cur) track.scrollLeft = cur.offsetLeft - track.clientWidth / 2 + cur.offsetWidth / 2;
+};
+
 const renderStepper = () => {
   const { etapas } = rotaAtual();
   qs('#stepper').innerHTML = etapas.map((e, i) => {
@@ -81,16 +88,29 @@ const renderStepper = () => {
     else if (i === nav.index) state = 'current';
     return `
       <li class="step actor-${esc(e.actor)} ${state}">
-        <button type="button" class="step-btn" data-action="step" data-index="${i}" aria-current="${i === nav.index ? 'step' : 'false'}">
+        <button type="button" class="step-btn" data-action="step" data-index="${i}" aria-current="${i === nav.index ? 'step' : 'false'}" title="${esc(e.produto)} · ${esc(e.label)}">
           <span class="step-dot">${i < nav.index ? '✓' : i + 1}</span>
           <span class="step-prod">${esc(e.produto)}</span>
           <span class="step-label">${esc(e.label)}</span>
         </button>
       </li>`;
   }).join('');
-  const cur = /** @type {HTMLElement|null} */ (qs('#stepper').querySelector('.step.current'));
-  const track = /** @type {HTMLElement} */ (qs('#stepper').parentElement);
-  if (cur) track.scrollLeft = cur.offsetLeft - track.clientWidth / 2 + cur.offsetWidth / 2;
+  centerCurrentStep();
+};
+
+/**
+ * Retrai ou expande as barras de rotas e etapas.
+ * Retraído: rotas mostram só a chave ("Rota 1") e etapas só o número.
+ * @param {boolean} collapsed
+ */
+const setCollapsed = (collapsed) => {
+  const btn = qs('#btnCollapse');
+  const label = collapsed ? 'Expandir rotas e etapas' : 'Retrair rotas e etapas';
+  qs('#shell').classList.toggle('is-collapsed', collapsed);
+  btn.setAttribute('aria-expanded', String(!collapsed));
+  btn.setAttribute('aria-label', label);
+  btn.title = label;
+  centerCurrentStep();
 };
 
 const ATOR_LABEL = Object.freeze({ rh: 'RH · ID', medico: 'Médico · Pro', colaborador: 'Colaborador · App', externo: 'Canal externo', sistema: 'Sistema' });
@@ -252,6 +272,7 @@ export const initNavigator = (hooks) => {
     next: () => goToIndex(nav.index + 1),
   });
   qs('#btnCompare').addEventListener('click', () => hooks.onCompare(nav.rotaId));
+  qs('#btnCollapse').addEventListener('click', () => setCollapsed(!shell.classList.contains('is-collapsed')));
   qs('#btnReset').addEventListener('click', () => {
     hooks.onReset();
     nav.index = 0;

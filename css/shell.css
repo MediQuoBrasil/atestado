@@ -61,26 +61,26 @@ button { font: inherit; color: inherit; }
 .shell-top {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
-  padding: 12px 20px;
+  padding: 6px 20px;
   border-bottom: 1px solid var(--c-line);
 }
 
-.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; line-height: 1.25; }
 .brand-mark {
-  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
   background:
     linear-gradient(135deg, var(--c-primary), var(--c-primary-soft));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 4px 14px rgba(73, 30, 156, 0.45);
   position: relative;
 }
 .brand-mark::after {
-  content: ''; position: absolute; inset: 8px 13px; background: #fff; border-radius: 2px;
+  content: ''; position: absolute; inset: 7px 11px; background: #fff; border-radius: 2px;
   box-shadow: -5px 0 0 0 transparent;
 }
 .brand-mark::before {
-  content: ''; position: absolute; inset: 13px 8px; background: #fff; border-radius: 2px;
+  content: ''; position: absolute; inset: 11px 7px; background: #fff; border-radius: 2px;
 }
 .brand-title { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
 .brand-sub { margin: 0; font-size: 11.5px; color: var(--c-dim); }
@@ -97,10 +97,11 @@ button { font: inherit; color: inherit; }
   max-width: 100%;
 }
 .route-btn {
-  display: grid;
-  gap: 1px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   text-align: left;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -134,24 +135,42 @@ button { font: inherit; color: inherit; }
 .chip-btn:hover { border-color: var(--c-accent); }
 .chip-btn.ghost { background: transparent; color: var(--c-muted); }
 
+/* Botão de retrair rotas e etapas: seta /\ quando aberto, \/ quando retraído. */
+.collapse-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1.5px solid var(--c-line);
+  border-radius: 50%;
+  background: var(--c-surface);
+  color: var(--c-text);
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.collapse-btn:hover { border-color: var(--c-accent); }
+.collapse-btn svg { transition: transform .25s var(--ease); }
+.shell.is-collapsed .collapse-btn svg { transform: rotate(180deg); }
+
 /* ─── Trilha de etapas ─────────────────────────────────── */
 
-.journey { position: relative; padding: 14px 20px 6px; overflow-x: auto; }
+.journey { position: relative; padding: 8px 20px 2px; overflow-x: auto; }
 .stepper {
   list-style: none;
   margin: 0;
-  padding: 0 0 6px;
+  padding: 0 0 4px;
   display: flex;
   min-width: max-content;
   counter-reset: step;
 }
-.step { position: relative; flex: 1 0 140px; max-width: 220px; }
+.step { position: relative; flex: 1 0 130px; max-width: 220px; }
 .step + .step::before {
   content: '';
   position: absolute;
-  top: 15px;
-  right: calc(50% + 18px);
-  left: calc(-50% + 18px);
+  top: 11px;
+  right: calc(50% + 15px);
+  left: calc(-50% + 15px);
   height: 2px;
   background: var(--c-line);
 }
@@ -159,7 +178,7 @@ button { font: inherit; color: inherit; }
 .step-btn {
   display: grid;
   justify-items: center;
-  gap: 6px;
+  gap: 2px;
   width: 100%;
   padding: 0 6px;
   border: 0;
@@ -168,7 +187,7 @@ button { font: inherit; color: inherit; }
   text-align: center;
 }
 .step-dot {
-  width: 32px; height: 32px;
+  width: 24px; height: 24px;
   display: grid; place-items: center;
   border-radius: 50%;
   border: 2px solid var(--actor, var(--c-accent));
@@ -176,7 +195,7 @@ button { font: inherit; color: inherit; }
   color: var(--actor);
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 11.5px;
   font-variant-numeric: tabular-nums;
   transition: transform .25s var(--ease), background .25s, color .25s;
 }
@@ -185,12 +204,32 @@ button { font: inherit; color: inherit; }
   background: var(--actor);
   color: #0b0913;
   transform: scale(1.12);
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--actor) 22%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--actor) 22%, transparent);
 }
 .step-btn:hover .step-dot { transform: scale(1.08); }
-.step-prod { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--actor); }
-.step-label { font-size: 12.5px; color: var(--c-muted); line-height: 1.3; text-wrap: balance; }
+.step-prod { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--actor); line-height: 1.3; }
+.step-label { font-size: 12px; color: var(--c-muted); line-height: 1.25; text-wrap: balance; }
 .step.current .step-label { color: var(--c-text); font-weight: 700; }
+
+/* ─── Estado retraído: rotas só com a chave, etapas só com o número ─── */
+
+.shell.is-collapsed .brand-sub { display: none; }
+.shell.is-collapsed .route-btn { padding: 3px 9px; }
+.shell.is-collapsed .route-btn .rk { opacity: 1; }
+.shell.is-collapsed .route-btn .rn { display: none; }
+.shell.is-collapsed .journey { padding-block: 5px 1px; }
+.shell.is-collapsed .stepper { width: max-content; margin-inline: auto; }
+.shell.is-collapsed .step { flex: 0 0 48px; }
+/* Texto oculto só visualmente: continua no nome acessível do botão. */
+.shell.is-collapsed .step-prod,
+.shell.is-collapsed .step-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 .actor-rh { --actor: var(--c-rh); }
 .actor-medico { --actor: var(--c-medico); }
@@ -203,10 +242,10 @@ button { font: inherit; color: inherit; }
 .step-note {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin: 4px 20px 10px;
-  padding: 10px 14px;
+  margin: 2px 20px 8px;
+  padding: 6px 12px;
   background: var(--c-surface);
   border: 1px solid var(--c-line);
   border-radius: var(--radius-md);
@@ -224,12 +263,12 @@ button { font: inherit; color: inherit; }
   text-transform: uppercase;
 }
 .note-text { flex: 1 1 320px; min-width: 0; }
-.note-title { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 15px; }
-.note-desc { margin: 2px 0 0; color: var(--c-muted); font-size: 13px; max-width: 90ch; }
+.note-title { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 14px; line-height: 1.3; }
+.note-desc { margin: 1px 0 0; color: var(--c-muted); font-size: 12.5px; line-height: 1.4; max-width: 90ch; }
 .note-nav { display: flex; gap: 8px; align-items: center; }
 .nav-btn {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 14px;
+  padding: 5px 12px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--c-line);
   background: transparent;
@@ -339,7 +378,7 @@ button { font: inherit; color: inherit; }
 .toast.success { border-color: #34d399; }
 
 @media (max-width: 720px) {
-  .shell-top { padding: 10px 16px; }
+  .shell-top { padding: 6px 16px; }
   .route-switch { order: 3; margin-inline: 0; width: 100%; }
   .journey { padding-inline: 16px; }
   .step-note { margin-inline: 16px; }
