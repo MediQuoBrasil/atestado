@@ -36,7 +36,7 @@ export const STATUS = Object.freeze({
   em_analise: { label: 'Em análise médica', tone: 'info' },
   validado: { label: 'Documento validado', tone: 'ok' },
   contato_pendente: { label: 'Contato pendente', tone: 'warn' },
-  convite_enviado: { label: 'Convite no WhatsApp', tone: 'info' },
+  em_contato: { label: 'Em contato pelo WhatsApp', tone: 'info' },
   agendado: { label: 'Consulta agendada', tone: 'info' },
   em_consulta: { label: 'Em consulta', tone: 'primary' },
   em_acompanhamento: { label: 'Em acompanhamento', tone: 'primary' },
@@ -134,7 +134,10 @@ export const DIAS_CUSTO_MES = 30;
  */
 export const custoAfastamento = (custoMensal, dias) => (custoMensal > 0 && dias > 0 ? (custoMensal / DIAS_CUSTO_MES) * dias : 0);
 
-/** Apps em que o colaborador recebe a videochamada (rótulos exibidos). */
+/** Janela de horários em que o secretário pode registrar consultas na agenda do médico. */
+export const JANELA_AGENDA = Object.freeze({ inicio: '08:00', fim: '18:00' });
+
+/** Apps em que o colaborador faz a videochamada (rótulos exibidos). */
 export const APPS_CONSULTA = Object.freeze({
   white_label: 'App de telessaúde da empresa',
   mediquo_saude: 'App MediQuo Saúde',

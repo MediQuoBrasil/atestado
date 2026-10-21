@@ -21,6 +21,7 @@
   --c-rh: #b69cff;
   --c-medico: #4fd8a5;
   --c-colab: #f6c453;
+  --c-secretario: #6cc4f5;
   --font-display: 'Outfit', 'Segoe UI', system-ui, sans-serif;
   --font-body: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif;
   --radius-sm: 8px;
@@ -195,6 +196,7 @@ button { font: inherit; color: inherit; }
 
 .actor-rh { --actor: var(--c-rh); }
 .actor-medico { --actor: var(--c-medico); }
+.actor-secretario { --actor: var(--c-secretario); }
 .actor-colaborador { --actor: var(--c-colab); }
 .actor-sistema { --actor: var(--c-accent); }
 

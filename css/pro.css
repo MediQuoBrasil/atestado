@@ -173,14 +173,6 @@
 .pro-checks li { display: flex; gap: .5rem; align-items: flex-start; font-size: .8125rem; }
 .pro-checks .ok { color: var(--p-green); }
 .pro-checks .warn { color: var(--p-amber); }
-.pro-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
-.pro-slot { position: relative; }
-.pro-slot input { position: absolute; opacity: 0; }
-.pro-slot span { display: grid; padding: .5rem .75rem; border: 1px solid var(--p-border); border-radius: .5rem; font-size: .8125rem; cursor: pointer; }
-.pro-slot span b { font-weight: 600; }
-.pro-slot span small { color: var(--p-muted-fg); }
-.pro-slot input:checked + span { border-color: var(--p-primary); background: rgba(74, 30, 167, .06); box-shadow: 0 0 0 1px var(--p-primary); }
-.pro-slot input:focus-visible + span { outline: 2px solid var(--p-primary); outline-offset: 2px; }
 .pro-callout { display: flex; gap: .625rem; align-items: flex-start; padding: .75rem; border-radius: .5rem; background: rgba(74, 30, 167, .06); color: #2d1470; font-size: .8125rem; }
 .pro-callout .ic { margin-top: 2px; }
 .pro-callout.warn { background: var(--p-amber-bg); color: #78350f; }

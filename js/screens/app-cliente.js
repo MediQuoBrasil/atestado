@@ -1,6 +1,6 @@
 /**
  * @file App MediQuo Saúde (colaborador, Rota 2): push de lembrete e "Iniciar consulta".
- * O horário é combinado pelo WhatsApp Telessaúde; o push é complementar. Segue o padrão visual da tela Agendamento do app.
+ * O secretário combina o horário pelo WhatsApp e registra no MediQuo Pro; o push é complementar. Segue o padrão visual da tela Agendamento do app.
  */
 
 import { delegate, esc, icon } from '../core/dom.js';
@@ -43,7 +43,7 @@ const cardProxima = (caso, comBotao) => `
     <div class="app-card">
       <div class="row"><span class="doc">${esc(MEDICA)}</span><span class="app-pill ${comBotao ? 'green' : 'purple'}">${comBotao ? 'Começa agora' : 'Agendada'}</span></div>
       <div class="when">${icon('calendar', 'ic-sm')} ${esc(fmtSlot(caso.agendamento?.slot ?? ''))}</div>
-      <div class="reason">Avaliação de afastamento · Clínica geral · marcada pelo WhatsApp</div>
+      <div class="reason">Avaliação de afastamento · Clínica geral · marcada pelo secretário no WhatsApp</div>
       ${comBotao ? `<button type="button" class="app-btn go" data-action="iniciar">${icon('video', 'ic-sm')} Iniciar consulta</button>` : `<div class="app-note">${icon('bell', 'ic-sm')}<span>Você recebe um lembrete 1 hora antes. O botão para entrar aparece no horário.</span></div>`}
     </div>`;
 
@@ -57,7 +57,7 @@ const telaAgenda = (caso, modoConsulta) => {
   let topo = '';
   if (caso.agendamento?.slot && ['agendado', 'em_consulta'].includes(caso.status)) topo = cardProxima(caso, modoConsulta);
   else if (caso.desfecho) topo = `<div class="app-note">${icon('check', 'ic-sm')}<span>Consulta realizada. Obrigado por conversar com a equipe médica.</span></div>`;
-  else topo = '<div class="app-empty"><p>Nenhuma consulta agendada. O horário é combinado pelo WhatsApp Telessaúde.</p><button type="button" class="app-btn" data-action="voltar-whatsapp">Ir para o WhatsApp</button></div>';
+  else topo = '<div class="app-empty"><p>Nenhuma consulta agendada. O secretário Telessaúde combina o horário com você pelo WhatsApp.</p><button type="button" class="app-btn" data-action="voltar-whatsapp">Ir para o WhatsApp</button></div>';
   return phone(`
     <div class="app">
       <div class="app-head">${icon('arrowLeft')}<h1>Agendamento</h1></div>
@@ -121,13 +121,13 @@ export const appPushScreen = {
           ${notif}
           <div class="notif muted"><span class="appicon" style="background:#7a7a86" aria-hidden="true"></span><span><span class="top"><span>Calendário</span><span>15:00</span></span><b>Reunião de equipe</b></span></div>
         </div>
-        <div class="lock-hint">${temConsulta ? 'Toque na notificação para abrir' : 'Nenhuma consulta confirmada ainda. O horário é combinado pelo WhatsApp.'}</div>
+        <div class="lock-hint">${temConsulta ? 'Toque na notificação para abrir' : 'Nenhuma consulta confirmada ainda. O horário é combinado com o secretário pelo WhatsApp.'}</div>
       </div>`, { light: true });
   },
   side: () => `
     <h3>Push complementar (só no app MediQuo Saúde)</h3>
     <ul>
-      <li>O horário já foi combinado pelo WhatsApp Telessaúde. O push só lembra e leva direto à consulta.</li>
+      <li>O horário já foi combinado com o secretário pelo WhatsApp. O push só lembra e leva direto à consulta.</li>
       <li>O texto não cita diagnóstico nem a empresa, porque aparece na tela bloqueada.</li>
       <li>Deep link abre o app na consulta: <code>mediquo://agendamento?consulta=${esc(getFocusCase().id)}</code></li>
       <li>Sem permissão de push, o lembrete segue pelo WhatsApp. Apps white label não têm esse push.</li>
@@ -146,8 +146,8 @@ export const appConsultaScreen = {
   side: () => `
     <h3>Iniciar consulta no MediQuo Saúde</h3>
     <ul>
-      <li>A consulta combinada pelo WhatsApp aparece sozinha na tela Agendamento.</li>
-      <li>No horário, o card mostra o botão verde "Iniciar consulta".</li>
+      <li>A consulta que o secretário registrou no MediQuo Pro aparece sozinha na tela Agendamento.</li>
+      <li>No horário, o colaborador inicia a consulta pelo botão verde "Iniciar consulta".</li>
       <li>A médica atende pelo MediQuo Pro (Espanha), como nos atendimentos de hoje.</li>
       <li>Ao encerrar, a jornada segue para o médico anexar o parecer.</li>
     </ul>`,

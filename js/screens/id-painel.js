@@ -96,13 +96,13 @@ const cardParecer = (caso, ctx) => {
         <dt>Parecer anexado</dt><dd>${esc(fmtDate(caso.parecer.anexadoEm))}</dd>
         <dt>Retorno previsto</dt><dd>${esc(fmtDate(addDays(caso.dataInicio, caso.dias)))}</dd>
       </dl>
-      <div class="id-actions"><button type="button" class="id-btn" data-action="baixar" data-id="${esc(caso.id)}">${icon('download', 'ic-sm')} Baixar parecer (PDF)</button></div>
+      <div class="id-actions"><button type="button" class="id-btn" data-action="baixar" data-id="${esc(caso.id)}">${icon('download', 'ic-sm')} Baixar parecer médico (PDF)</button></div>
     </div>
     <div class="id-note">${icon('lock', 'ic-sm')}<span>O parecer traz só a recomendação administrativa. Diagnóstico e conversa clínica ficam no prontuário da MediQuo (LGPD, dado de saúde é sensível).</span></div>`
-    : `<div class="id-empty">${icon('clipboard', 'ic-big')}<p>O médico ainda não anexou o parecer deste caso.</p>${stepConsulta ? `<button type="button" class="id-btn outline" data-action="goto" data-step="${esc(stepConsulta)}">Ir para a consulta</button>` : ''}</div>`;
+    : `<div class="id-empty">${icon('clipboard', 'ic-big')}<p>O médico ainda não emitiu o parecer deste caso.</p>${stepConsulta ? `<button type="button" class="id-btn outline" data-action="goto" data-step="${esc(stepConsulta)}">Ir para a consulta</button>` : ''}</div>`;
   return `
     <div class="id-grid-2">
-      <div class="id-card"><div class="id-card-head"><div><h2 class="id-card-title">Parecer do caso</h2><p class="id-card-desc">${esc(col?.nome ?? '')} · ${esc(caso.id)}</p></div>${pill(caso.status)}</div><div class="id-card-body" style="display:grid;gap:1rem">${body}</div></div>
+      <div class="id-card"><div class="id-card-head"><div><h2 class="id-card-title">Parecer médico do caso</h2><p class="id-card-desc">${esc(col?.nome ?? '')} · ${esc(caso.id)}</p></div>${pill(caso.status)}</div><div class="id-card-body" style="display:grid;gap:1rem">${body}</div></div>
       <div class="id-card"><div class="id-card-head"><h2 class="id-card-title">Histórico</h2></div><div class="id-card-body">${timeline(caso)}</div></div>
     </div>`;
 };

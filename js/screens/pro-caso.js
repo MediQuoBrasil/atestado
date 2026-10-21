@@ -1,6 +1,7 @@
 /**
  * @file MediQuo Pro · Caso de absenteísmo. Dados do atestado, contato informado pelo RH, histórico
- * do colaborador e ação da rota: validação documental (Rota 0) ou convite pelo WhatsApp Telessaúde (Rotas 1 e 2).
+ * do colaborador e ação da rota: validação documental (Rota 0) ou registro, pelo secretário, do horário
+ * combinado com o colaborador pelo WhatsApp (Rotas 1 e 2).
  */
 
 import { delegate, esc, icon } from '../core/dom.js';
@@ -9,20 +10,21 @@ import {
   addDays, diffDays, fmtCnpj, fmtDate, fmtSlot, fmtTelefone, plural,
 } from '../core/format.js';
 import {
-  STATUS, TODAY, atualizarCaso, empresaDoCaso, getColaborador, getFocusCase, horariosDisponiveis, listarCasos,
+  STATUS, TODAY, atualizarCaso, empresaDoCaso, getColaborador, getFocusCase, listarCasos, proximoDiaUtil, registrarAgendamento,
 } from '../core/store.js';
 import { lookupCid } from '../data/cid.js';
-import { APPS_CONSULTA_FRASE } from '../data/rules.js';
+import { APPS_CONSULTA, JANELA_AGENDA } from '../data/rules.js';
+import { MEDICA_PROGRAMA } from '../data/seed.js';
 import { abrirAtestado } from '../ui/pdf-viewer.js';
 import { goProHome, proShell } from './pro-shell.js';
 
 const log = createLogger('pro.caso');
 
-/** Horários selecionados pelo médico (por caso). */
-const selecionados = new Map();
+/** Status em que a consulta já foi registrada na agenda. */
+const REGISTRADOS = new Set(['agendado', 'em_consulta', 'em_acompanhamento', 'concluido', 'encaminhado']);
 
-/** Status em que o convite pelo WhatsApp já foi enviado. */
-const ENVIADOS = new Set(['convite_enviado', 'agendado', 'em_consulta', 'em_acompanhamento', 'concluido', 'encaminhado']);
+/** Horário sugerido no formulário (o que o colaborador pediu na conversa). */
+const HORA_SUGERIDA = '14:00';
 
 /**
  * App da consulta conforme o modo da etapa.
@@ -87,21 +89,6 @@ const cardHistorico = (caso) => {
 };
 
 /**
- * Seleção de horários da agenda do médico.
- * @param {import('../core/store.js').Caso} caso
- * @returns {string}
- */
-const slotPicker = (caso) => {
-  const slots = horariosDisponiveis(6);
-  if (!selecionados.has(caso.id)) selecionados.set(caso.id, new Set(slots.slice(0, 3)));
-  const sel = selecionados.get(caso.id);
-  return `<div class="pro-slots">${slots.map((s, i) => {
-    const [dia, hora] = fmtSlot(s).split(' · ');
-    return `<label class="pro-slot"><input type="checkbox" id="pslot${i}" value="${esc(s)}" data-action="slot" ${sel.has(s) ? 'checked' : ''}><span><b>${esc(hora)}</b><small>${esc(dia)}</small></span></label>`;
-  }).join('')}</div>`;
-};
-
-/**
  * Checagens documentais automáticas (Rota 0).
  * @param {import('../core/store.js').Caso} caso
  * @returns {Array<{ok: boolean, text: string}>}
@@ -140,32 +127,47 @@ const cardAcao = (caso, modo) => {
         </div>
       </div>`;
   }
-  const app = appDoModo(modo);
+  const app = caso.agendamento?.app ?? appDoModo(modo);
   const primeiroNome = (col?.nome ?? '').split(' ')[0];
-  const enviado = caso.agendamento?.canal === 'whatsapp' && ENVIADOS.has(caso.status);
-  if (enviado) {
-    const slots = caso.agendamento.slotsSugeridos.map((s) => `<li>${esc(fmtSlot(s))}</li>`).join('');
+  const ladoColaborador = app === 'mediquo_saude'
+    ? 'Ele recebe o push de lembrete e entra pelo botão "Iniciar consulta" do app MediQuo Saúde.'
+    : `No horário, ele procura a ${MEDICA_PROGRAMA.nome} nas conversas do app de telessaúde da empresa e inicia a videochamada.`;
+  if (REGISTRADOS.has(caso.status) && caso.agendamento?.slot) {
     return `
       <div class="pro-card">
-        <div class="pro-card-head"><div><h3 class="pro-card-title">Convite enviado pelo WhatsApp</h3><p class="pro-card-sub">Telessaúde → ${esc(fmtTelefone(caso.telefone))}</p></div>${badge(caso.status)}</div>
+        <div class="pro-card-head"><div><h3 class="pro-card-title">Consulta registrada</h3><p class="pro-card-sub">Combinada pelo WhatsApp · ${esc(fmtTelefone(caso.telefone))}</p></div>${badge(caso.status)}</div>
         <div class="pro-card-body pro-stack">
-          <div class="pro-callout">${icon('messageCircle')}<span>${caso.agendamento.slot ? 'O colaborador confirmou o horário pelo WhatsApp. A consulta já está na sua agenda.' : 'O colaborador responde no WhatsApp escolhendo um dos horários.'}</span></div>
-          <div><p class="pro-label">Horários oferecidos</p><ul class="pro-motivos">${slots}</ul></div>
-          ${caso.agendamento.slot ? `<p class="pro-label">Confirmado: <b>${esc(fmtSlot(caso.agendamento.slot))}</b></p>` : ''}
-          <button type="button" class="pro-btn" data-action="next">Ver conversa no WhatsApp ${icon('chevronRight', 'ic-sm')}</button>
+          <dl class="pro-kv">
+            <dt>Horário</dt><dd><b>${esc(fmtSlot(caso.agendamento.slot))}</b></dd>
+            <dt>Médico</dt><dd>${esc(MEDICA_PROGRAMA.nome)} · já está na agenda</dd>
+            <dt>App</dt><dd>${esc(APPS_CONSULTA[app])}</dd>
+          </dl>
+          <div class="pro-callout">${icon('messageCircle')}<span>A confirmação com o horário e o passo a passo saiu no WhatsApp. ${esc(ladoColaborador)}</span></div>
+          <button type="button" class="pro-btn" data-action="next">Ver o app do colaborador ${icon('chevronRight', 'ic-sm')}</button>
+        </div>
+      </div>`;
+  }
+  if (caso.status !== 'em_contato') {
+    return `
+      <div class="pro-card">
+        <div class="pro-card-head"><div><h3 class="pro-card-title">Marcar a consulta</h3><p class="pro-card-sub">Secretário · WhatsApp ${esc(fmtTelefone(caso.telefone))}</p></div>${badge(caso.status)}</div>
+        <div class="pro-card-body pro-stack">
+          <div class="pro-callout warn">${icon('alert')}<span>Converse com ${esc(primeiroNome)} pelo WhatsApp antes de registrar o horário.</span></div>
+          <button type="button" class="pro-btn" data-action="ir-whatsapp">${icon('messageCircle', 'ic-sm')} Abrir a conversa no WhatsApp</button>
         </div>
       </div>`;
   }
   return `
     <div class="pro-card">
-      <div class="pro-card-head"><div><h3 class="pro-card-title">Convidar pelo WhatsApp</h3><p class="pro-card-sub">Número Telessaúde → ${esc(fmtTelefone(caso.telefone))}</p></div></div>
+      <div class="pro-card-head"><div><h3 class="pro-card-title">Registrar horário combinado</h3><p class="pro-card-sub">Secretário · conversa com ${esc(primeiroNome)} pelo WhatsApp</p></div>${badge(caso.status)}</div>
       <div class="pro-card-body pro-stack">
-        <p class="pro-label">Horários da agenda que serão oferecidos</p>
-        ${slotPicker(caso)}
-        <div class="pro-mini"><span>Prévia da mensagem</span><b>Telessaúde · WhatsApp</b><span>Olá, ${esc(primeiroNome)}! Recebemos seu atestado e queremos acompanhar sua recuperação numa consulta rápida por vídeo, pelo ${esc(APPS_CONSULTA_FRASE[app])}. Qual horário fica melhor?</span></div>
-        ${app === 'mediquo_saude' ? `<div class="pro-callout">${icon('bell')}<span>Depois da confirmação, o app MediQuo Saúde manda um push de lembrete e libera o botão "Iniciar consulta" no horário.</span></div>`
-    : `<div class="pro-callout">${icon('alert')}<span>App white label: sem push e sem botão de consulta. No horário, o médico liga pelo MediQuo Pro (Espanha) e o colaborador atende no chat do app.</span></div>`}
-        <button type="button" class="pro-btn" data-action="enviar">${icon('send', 'ic-sm')} Enviar pelo WhatsApp</button>
+        <div class="pro-split">
+          <div class="pro-field"><label for="agData">Data</label><input id="agData" class="pro-input" type="date" min="${esc(TODAY)}" value="${esc(proximoDiaUtil())}" required></div>
+          <div class="pro-field"><label for="agHora">Horário</label><input id="agHora" class="pro-input" type="time" min="${esc(JANELA_AGENDA.inicio)}" max="${esc(JANELA_AGENDA.fim)}" step="900" value="${esc(HORA_SUGERIDA)}" required></div>
+        </div>
+        <p class="pro-label">Agenda de ${esc(MEDICA_PROGRAMA.nome)} · dias úteis, das ${esc(JANELA_AGENDA.inicio)} às ${esc(JANELA_AGENDA.fim)}</p>
+        <div class="pro-callout">${icon('video')}<span>${esc(ladoColaborador)} O médico atende pelo MediQuo Pro (Espanha).</span></div>
+        <button type="button" class="pro-btn" data-action="registrar">${icon('calendar', 'ic-sm')} Registrar e confirmar no WhatsApp</button>
       </div>
     </div>`;
 };
@@ -191,34 +193,27 @@ const render = (ctx) => {
  * @returns {function(): void}
  */
 const bind = (root, ctx) => {
-  const enviar = () => {
+  const registrar = () => {
     const caso = getFocusCase();
-    const slots = [...(selecionados.get(caso.id) ?? [])].sort();
-    if (slots.length === 0) {
-      ctx.toast('Escolha pelo menos um horário.', 'error');
+    const data = /** @type {HTMLInputElement|null} */ (root.querySelector('#agData'))?.value ?? '';
+    const hora = /** @type {HTMLInputElement|null} */ (root.querySelector('#agHora'))?.value ?? '';
+    const result = registrarAgendamento(caso.id, { data, hora });
+    if (!result.ok) {
+      log.warn('Registro de horário recusado', { caso: caso.id, motivo: result.error });
+      ctx.toast(result.error, 'error');
       return;
     }
-    const app = appDoModo(ctx.params.modo ?? '');
-    atualizarCaso(caso.id, {
-      status: 'convite_enviado',
-      agendamento: {
-        canal: 'whatsapp', app, slotsSugeridos: slots, slot: null,
-      },
-    }, { actor: 'medico', text: `Equipe Telessaúde enviou convite pelo WhatsApp com ${slots.length} horário(s)` });
-    log.info('Convite WhatsApp enviado', { app, slots: slots.length, telefone: caso.telefone });
-    ctx.toast('Mensagem enviada pelo WhatsApp Telessaúde.', 'success');
+    ctx.toast('Consulta na agenda do médico. Confirmação enviada no WhatsApp e status atualizado no ID.', 'success');
   };
   const off = delegate(root, 'click', {
     'ver-pdf': () => abrirAtestado(getFocusCase()),
     voltar: () => goProHome(ctx),
     next: () => ctx.next(),
-    slot: (el) => {
-      const input = /** @type {HTMLInputElement} */ (el);
-      const set = selecionados.get(getFocusCase().id);
-      if (!set) return;
-      if (input.checked) set.add(input.value); else set.delete(input.value);
+    registrar,
+    'ir-whatsapp': () => {
+      const step = ctx.rota.etapas.find((e) => e.screen === 'whatsapp');
+      if (step) ctx.goTo(step.id);
     },
-    enviar,
     validar: () => {
       const caso = getFocusCase();
       atualizarCaso(caso.id, { status: 'validado' }, { actor: 'medico', text: 'Equipe médica validou o documento' });

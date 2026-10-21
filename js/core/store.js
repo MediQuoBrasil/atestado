@@ -5,11 +5,13 @@
 
 import { createLogger } from './logger.js';
 import {
-  addDays, brToIso, digits, parseIsoDate,
+  addDays, brToIso, digits, fmtSlot, parseIsoDate,
 } from './format.js';
 import { COLABORADORES, EMPRESAS, MEDICOS_EMISSORES, SEED_ROWS, TODAY } from '../data/seed.js';
 import { lookupCid } from '../data/cid.js';
-import { DESFECHOS, STATUS, triar } from '../data/rules.js';
+import {
+  DESFECHOS, JANELA_AGENDA, STATUS, triar,
+} from '../data/rules.js';
 
 const log = createLogger('store');
 
@@ -19,15 +21,16 @@ const log = createLogger('store');
  * @typedef {import('../data/rules.js').Triagem} Triagem
  */
 
-/** @typedef {'white_label'|'mediquo_saude'} AppConsulta App em que o colaborador recebe a consulta. */
+/** @typedef {'white_label'|'mediquo_saude'} AppConsulta App em que o colaborador faz a consulta. */
 
 /**
  * @typedef {Object} Agendamento
- * @property {'whatsapp'} canal        O horário é combinado pelo WhatsApp Telessaúde.
+ * @property {'whatsapp'} canal  O secretário combina o horário em conversa direta pelo WhatsApp.
  * @property {AppConsulta} app
- * @property {string[]} slotsSugeridos Horários oferecidos ('AAAA-MM-DDTHH:mm').
- * @property {string|null} slot        Horário confirmado pelo colaborador.
+ * @property {string|null} slot  Horário registrado pelo secretário no MediQuo Pro ('AAAA-MM-DDTHH:mm').
  */
+
+/** @typedef {'rh'|'medico'|'secretario'|'colaborador'|'sistema'} AtorTimeline */
 
 /**
  * @typedef {Object} Desfecho
@@ -47,7 +50,7 @@ const log = createLogger('store');
 /**
  * @typedef {Object} TimelineEntry
  * @property {string} ts    'AAAA-MM-DD HH:mm'.
- * @property {'rh'|'medico'|'colaborador'|'sistema'} actor
+ * @property {AtorTimeline} actor
  * @property {string} text
  */
 
@@ -440,26 +443,73 @@ export const resetStore = () => {
 };
 
 /**
- * Horários livres sugeridos a partir de amanhã (agenda simulada do médico).
- * @param {number} [quantidade=6]
- * @returns {string[]} 'AAAA-MM-DDTHH:mm'
+ * Primeiro dia útil depois de hoje (sugestão inicial no registro do horário).
+ * @returns {string} ISO.
  */
-export const horariosDisponiveis = (quantidade = 6) => {
-  const horas = ['08:00', '09:30', '11:00', '14:00', '15:30', '17:00'];
-  /** @type {string[]} */
-  const out = [];
-  let offset = 1;
-  while (out.length < quantidade && offset < 10) {
-    const dia = addDays(TODAY, offset);
-    const weekday = parseIsoDate(dia).getDay();
-    if (weekday !== 0 && weekday !== 6) {
-      horas.filter((_, i) => (i + offset) % 2 === 0).forEach((h) => {
-        if (out.length < quantidade) out.push(`${dia}T${h}`);
-      });
-    }
-    offset += 1;
+export const proximoDiaUtil = () => {
+  let dia = addDays(TODAY, 1);
+  while ([0, 6].includes(parseIsoDate(dia).getDay())) dia = addDays(dia, 1);
+  return dia;
+};
+
+/** Status anteriores ao primeiro contato do secretário. */
+const ANTES_DO_CONTATO = new Set(['registrado', 'em_analise', 'validado', 'contato_pendente']);
+
+/**
+ * O secretário inicia a conversa com o colaborador pelo WhatsApp (validação equivalente à do servidor).
+ * @param {string} id
+ * @param {AppConsulta} app App em que a consulta vai acontecer.
+ * @returns {{ok: true, caso: Caso} | {ok: false, error: string}}
+ */
+export const iniciarContato = (id, app) => {
+  const caso = getCaso(id);
+  if (!caso) return { ok: false, error: 'Caso não encontrado.' };
+  if (!['white_label', 'mediquo_saude'].includes(app)) return { ok: false, error: 'App da consulta inválido.' };
+  if (!ANTES_DO_CONTATO.has(caso.status)) return { ok: false, error: 'A conversa com este colaborador já começou.' };
+  if (!normalizarCelular(caso.telefone)) return { ok: false, error: 'O caso não tem celular válido. Peça o contato ao RH.' };
+  caso.status = 'em_contato';
+  caso.agendamento = { canal: 'whatsapp', app, slot: null };
+  caso.timeline.push({ ts: nowStamp(), actor: 'secretario', text: 'Secretário iniciou a conversa com o colaborador pelo WhatsApp' });
+  log.info('Contato iniciado pelo WhatsApp', { id, app, telefone: caso.telefone });
+  emit();
+  return { ok: true, caso };
+};
+
+/**
+ * @typedef {Object} AgendamentoInput
+ * @property {string} data 'AAAA-MM-DD'.
+ * @property {string} hora 'HH:mm'.
+ */
+
+/**
+ * Registra no MediQuo Pro o horário combinado pelo secretário no WhatsApp (validação equivalente à do servidor).
+ * A consulta entra na agenda do médico e o status muda no ID.
+ * @param {string} id
+ * @param {AgendamentoInput} input
+ * @returns {{ok: true, caso: Caso} | {ok: false, error: string}}
+ */
+export const registrarAgendamento = (id, input) => {
+  const caso = getCaso(id);
+  if (!caso) return { ok: false, error: 'Caso não encontrado.' };
+  if (caso.status !== 'em_contato' || !caso.agendamento) return { ok: false, error: 'Converse com o colaborador pelo WhatsApp antes de registrar o horário.' };
+  const data = String(input.data ?? '');
+  const hora = String(input.hora ?? '');
+  const dia = parseIsoDate(data);
+  if (!dia) return { ok: false, error: 'Informe a data da consulta.' };
+  if (data < TODAY) return { ok: false, error: 'A data da consulta não pode estar no passado.' };
+  if ([0, 6].includes(dia.getDay())) return { ok: false, error: 'Escolha um dia útil.' };
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)) return { ok: false, error: 'Informe o horário no formato HH:mm.' };
+  if (hora < JANELA_AGENDA.inicio || hora > JANELA_AGENDA.fim) return { ok: false, error: `Escolha um horário entre ${JANELA_AGENDA.inicio} e ${JANELA_AGENDA.fim}.` };
+  const slot = `${data}T${hora}`;
+  if (state.casos.some((c) => c.id !== id && c.agendamento?.slot === slot && ['agendado', 'em_consulta'].includes(c.status))) {
+    return { ok: false, error: 'Este horário já está ocupado na agenda do médico.' };
   }
-  return out;
+  caso.status = 'agendado';
+  caso.agendamento = { ...caso.agendamento, slot };
+  caso.timeline.push({ ts: nowStamp(), actor: 'secretario', text: `Secretário registrou no MediQuo Pro a consulta combinada pelo WhatsApp: ${fmtSlot(slot)}` });
+  log.info('Consulta registrada', { id, app: caso.agendamento.app, slot });
+  emit();
+  return { ok: true, caso };
 };
 
 export { STATUS, TODAY };

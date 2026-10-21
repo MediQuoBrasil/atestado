@@ -94,7 +94,7 @@ const painelAgenda = (foco) => {
   }).join('');
   return `
     <div class="pro-card">
-      <div class="pro-card-head"><div><h3 class="pro-card-title">Agendamentos</h3><p class="pro-card-sub">Consultas de absenteísmo marcadas pelo WhatsApp</p></div><span class="badge neutral">${icon('calendar', 'ic-sm')} ${itens.length}</span></div>
+      <div class="pro-card-head"><div><h3 class="pro-card-title">Agendamentos</h3><p class="pro-card-sub">Consultas de absenteísmo registradas pelo secretário</p></div><span class="badge neutral">${icon('calendar', 'ic-sm')} ${itens.length}</span></div>
       <div class="pro-card-body">${linhas ? `<ul class="pro-history">${linhas}</ul>` : '<p class="pro-empty">Nenhuma consulta agendada.</p>'}</div>
     </div>`;
 };
@@ -109,7 +109,7 @@ const painelAtendimentoPep = (caso, app) => {
   const col = getColaborador(caso.colaboradorId);
   const ladoPaciente = app === 'mediquo_saude'
     ? 'O colaborador entra pelo botão "Iniciar consulta" do app MediQuo Saúde, depois do push de lembrete.'
-    : 'O colaborador recebe a chamada no chat do app de telessaúde da empresa (white label, sem push e sem botão de consulta).';
+    : 'O colaborador procura o médico nas conversas do app de telessaúde da empresa (white label, sem push e sem botão de consulta) e inicia a videochamada pelo chat.';
   const quando = caso.agendamento?.slot ? fmtSlot(caso.agendamento.slot) : 'horário a definir';
   const aberto = getFlag(flagPep(caso.id));
   let badge = `<span class="badge ${STATUS[caso.status].tone}">${esc(STATUS[caso.status].label)}</span>`;
@@ -124,7 +124,7 @@ const painelAtendimentoPep = (caso, app) => {
       <div class="pro-card-head"><div><h3 class="pro-card-title">Atender pelo MediQuo Pro (Espanha)</h3><p class="pro-card-sub">${esc(quando)}</p></div>${badge}</div>
       <div class="pro-card-body pro-stack">
         <div class="pro-callout">${icon('messageCircle')}<span>A videochamada acontece no MediQuo Pro (Espanha), no chat de <b>${esc(col?.nome ?? 'paciente')}</b>, como nos atendimentos de hoje. Este painel não abre vídeo.</span></div>
-        <div class="pro-mini"><span>Onde atender</span><b>${esc(PEP_HOST)}</b><span>Abra o chat do paciente e inicie a videochamada no horário marcado.</span></div>
+        <div class="pro-mini"><span>Onde atender</span><b>${esc(PEP_HOST)}</b><span>No horário marcado, o paciente chama você pelo chat. Atenda a videochamada no chat dele.</span></div>
         <div class="pro-mini"><span>Lado do colaborador · ${esc(APPS_CONSULTA[app])}</span><span>${esc(ladoPaciente)}</span></div>
         ${acao}
       </div>
@@ -279,9 +279,7 @@ const bind = (root, ctx) => {
       const slot = caso.agendamento?.slot ?? `${TODAY}T15:30`;
       atualizarCaso(caso.id, {
         status: 'em_consulta',
-        agendamento: {
-          canal: 'whatsapp', app: appDaConsulta(caso, ctx), slotsSugeridos: caso.agendamento?.slotsSugeridos ?? [slot], slot,
-        },
+        agendamento: { canal: 'whatsapp', app: appDaConsulta(caso, ctx), slot },
       }, { actor: 'sistema', text: 'Consulta iniciada (simulação)' });
     },
     'gerar-parecer': () => { gerar(); refresh(); },

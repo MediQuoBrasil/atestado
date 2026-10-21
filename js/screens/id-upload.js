@@ -161,7 +161,7 @@ const renderReview = () => {
         <div class="id-field full">
           <label class="id-label" for="fTel">Celular com WhatsApp do colaborador</label>
           <input id="fTel" type="tel" inputmode="tel" autocomplete="off" maxlength="20" class="id-input ${e.telefone ? 'err' : ''}" data-field="telefone" placeholder="(11) 98765-4321" value="${esc(f.telefone)}">
-          ${e.telefone ? `<span class="id-err">${esc(e.telefone)}</span>` : '<span class="id-hint">A equipe Telessaúde da MediQuo entra em contato por esse número para marcar a consulta.</span>'}
+          ${e.telefone ? `<span class="id-err">${esc(e.telefone)}</span>` : '<span class="id-hint">O secretário Telessaúde da MediQuo chama o colaborador nesse número pelo WhatsApp para marcar a consulta.</span>'}
         </div>
         <div class="id-field"><label class="id-label" for="fEmp">Empresa</label><input id="fEmp" class="id-input" readonly value="${esc(emp?.razao ?? '—')}"></div>
         <div class="id-field"><label class="id-label" for="fCnpj">CNPJ vinculado</label><input id="fCnpj" class="id-input" readonly value="${esc(emp ? fmtCnpj(emp.cnpj) : '—')}"></div>

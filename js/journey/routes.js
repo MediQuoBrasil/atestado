@@ -3,7 +3,7 @@
  * Cada etapa aponta para uma tela e parâmetros; a navegação é livre entre etapas.
  */
 
-/** @typedef {'rh'|'medico'|'colaborador'|'sistema'} Ator */
+/** @typedef {'rh'|'medico'|'secretario'|'colaborador'|'sistema'} Ator */
 
 /**
  * @typedef {Object} Etapa
@@ -50,10 +50,52 @@ const painelPro = (over) => ({
   screen: 'pro-dashboard',
   actor: 'medico',
   produto: 'MediQuo Pro',
-  label: 'Médico e gestão veem o painel',
+  label: 'Médico e secretário recebem o caso',
   titulo: 'Painel de absenteísmo no MediQuo Pro',
-  nota: 'O atestado e o contato chegam para o médico e para a gestão. O caso enviado aparece no topo da lista, com o WhatsApp informado pelo RH. Teste os filtros por paciente, CNPJ, CID, quantidade de atestados e reincidência. Clique no PDF para abrir o atestado original.',
+  nota: 'O atestado e o contato chegam para o médico e para o secretário. O caso enviado aparece no topo da lista, com o WhatsApp informado pelo RH. Teste os filtros por paciente, CNPJ, CID, quantidade de atestados e reincidência. Clique no PDF para abrir o atestado original.',
   ...over,
+});
+
+/**
+ * Conversa do secretário com o colaborador pelo WhatsApp (Rotas 1 e 2).
+ * @param {string} complemento Como a consulta acontece no app da rota.
+ * @returns {Etapa}
+ */
+const contatoWhatsapp = (complemento) => ({
+  id: 'whatsapp',
+  screen: 'whatsapp',
+  actor: 'secretario',
+  produto: 'WhatsApp Telessaúde',
+  label: 'Secretário chama no WhatsApp',
+  titulo: 'Secretário combina a consulta pelo WhatsApp',
+  nota: `Você está no WhatsApp do secretário. Envie a primeira mensagem para o celular informado pelo RH; a conversa é direta e o colaborador responde com o dia e horário que prefere. ${complemento}`,
+});
+
+/**
+ * Registro do horário combinado no MediQuo Pro (Rotas 1 e 2).
+ * @param {import('../core/store.js').AppConsulta} modo
+ * @returns {Etapa}
+ */
+const registroHorario = (modo) => ({
+  id: 'registro',
+  screen: 'pro-caso',
+  params: { modo },
+  actor: 'secretario',
+  produto: 'MediQuo Pro',
+  label: 'Secretário registra o horário',
+  titulo: 'Horário combinado registrado no MediQuo Pro',
+  nota: 'Informe a data e o horário que o colaborador escolheu. A consulta entra na agenda do médico, a confirmação sai no WhatsApp e o status muda no ID.',
+});
+
+/** Etapa final, comum às Rotas 1 e 2. */
+const PAINEL_RH = Object.freeze({
+  id: 'painel-rh',
+  screen: 'id-painel',
+  actor: 'rh',
+  produto: 'ID',
+  label: 'RH baixa o parecer médico',
+  titulo: 'Parecer médico para download no ID',
+  nota: 'Baixe o parecer médico do caso em PDF. Troque o período para ver dias de atestado e custo estimado por colaborador. Sem CID nem dado clínico.',
 });
 
 /** @type {ReadonlyArray<Rota>} */
@@ -89,38 +131,26 @@ export const ROTAS = Object.freeze([
     nome: 'WhatsApp + app white label',
     esforco: 2,
     prazo: '4–6 semanas',
-    resumo: 'A equipe Telessaúde marca a consulta pelo WhatsApp. O colaborador atende a videochamada no app de telessaúde da empresa (white label, sem push e sem botão), o médico atende pelo MediQuo Pro (Espanha) e anexa o parecer, que o RH baixa no ID junto com o painel de custo e dias.',
-    construir: ['Tudo da Rota 0, com o celular do colaborador no envio', 'Convite pelo WhatsApp Telessaúde e registro do horário no Pro', 'Agenda de absenteísmo no Pro com atalho para o MediQuo Pro (Espanha)', 'Anexo do parecer em PDF no Pro', 'Painel no ID: custo e dias de atestado por período e download do parecer'],
-    reaproveita: ['Número de WhatsApp Telessaúde', 'Videochamada pelo chat do MediQuo Pro (Espanha) e dos apps de telessaúde', 'Agenda de profissionais do Pro'],
-    riscos: ['Contato pelo WhatsApp manual no início (escala da equipe)', 'Sem lembrete no app, mais risco de o colaborador não atender', 'Custo depende do custo mensal cadastrado no ID'],
+    resumo: 'O RH envia o atestado e o contato no ID; o caso chega no MediQuo Pro para o médico e para o secretário. O secretário marca a consulta em conversa direta pelo WhatsApp e registra o horário no Pro. No horário, o colaborador procura o médico no chat do app de telessaúde da empresa (white label) e inicia a videochamada; o médico atende pelo MediQuo Pro (Espanha) e emite o parecer, que o RH baixa no ID.',
+    construir: ['Tudo da Rota 0, com o celular do colaborador no envio', 'Perfil de secretário no Pro, com acesso ao contato e à agenda (sem dado clínico)', 'Registro do horário combinado no Pro, com confirmação pelo WhatsApp', 'Anexo do parecer médico em PDF no Pro', 'Painel no ID: download do parecer e custo e dias de atestado por período'],
+    reaproveita: ['Número de WhatsApp Telessaúde', 'Chat com videochamada do app de telessaúde e do MediQuo Pro (Espanha)', 'Agenda de profissionais do Pro'],
+    riscos: ['Agendamento manual pelo secretário (gargalo com volume alto)', 'Sem lembrete no app, mais risco de o colaborador não procurar o médico no horário', 'Custo depende do custo mensal cadastrado no ID'],
     etapas: [
       ENVIO,
       painelPro({ id: 'painel' }),
-      {
-        id: 'convite', screen: 'pro-caso', params: { modo: 'white_label' }, actor: 'medico', produto: 'MediQuo Pro',
-        label: 'Equipe convida pelo WhatsApp', titulo: 'Convite pelo WhatsApp Telessaúde',
-        nota: 'Escolha os horários da agenda e envie a mensagem do número Telessaúde para o celular informado pelo RH. Neste app white label não há push nem botão de consulta.',
-      },
-      {
-        id: 'whatsapp', screen: 'whatsapp', actor: 'colaborador', produto: 'WhatsApp Telessaúde',
-        label: 'Colaborador marca no WhatsApp', titulo: 'Horário combinado pelo WhatsApp',
-        nota: 'Toque em um dos horários como se fosse o colaborador. A confirmação entra na agenda do Pro e o status muda no ID.',
-      },
+      contatoWhatsapp('Depois, registre o horário no MediQuo Pro.'),
+      registroHorario('white_label'),
       {
         id: 'chamada', screen: 'app-whitelabel', actor: 'colaborador', produto: 'App de telessaúde',
-        label: 'Colaborador atende a chamada', titulo: 'Videochamada no app white label',
-        nota: 'Sem push e sem botão "Iniciar consulta". No horário, o médico liga pelo MediQuo Pro (Espanha) e a chamada chega no chat do app. Toque em atender e depois em encerrar.',
+        label: 'Colaborador procura o médico', titulo: 'Colaborador procura o médico no chat do app',
+        nota: 'Sem push e sem botão "Iniciar consulta". No horário, toque na conversa com a médica e depois na câmera para iniciar a videochamada. Encerre para seguir.',
       },
       {
         id: 'parecer', screen: 'pro-consulta', params: { app: 'white_label' }, actor: 'medico', produto: 'MediQuo Pro',
-        label: 'Médico anexa o parecer', titulo: 'Atendimento pelo MediQuo Pro (Espanha) e parecer',
-        nota: 'A consulta está na agenda do Pro e o atendimento acontece no MediQuo Pro (Espanha). Depois, escolha o desfecho e anexe o parecer em PDF (ou gere o padrão). A nota clínica fica no prontuário.',
+        label: 'Médico atende e emite o parecer', titulo: 'Atendimento pelo MediQuo Pro (Espanha) e parecer médico',
+        nota: 'A consulta está na agenda do Pro e o paciente chama pelo chat; o atendimento acontece no MediQuo Pro (Espanha). Depois, escolha o desfecho e anexe o parecer médico em PDF (ou gere o padrão). A nota clínica fica no prontuário.',
       },
-      {
-        id: 'painel-rh', screen: 'id-painel', actor: 'rh', produto: 'ID',
-        label: 'RH vê painel e baixa parecer', titulo: 'Painel de custo, dias e pareceres no ID',
-        nota: 'Troque o período para ver dias de atestado e custo estimado por colaborador. Baixe o parecer do caso em PDF. Sem CID nem dado clínico.',
-      },
+      PAINEL_RH,
     ],
   },
   {
@@ -129,23 +159,15 @@ export const ROTAS = Object.freeze([
     nome: 'WhatsApp + MediQuo Saúde',
     esforco: 3,
     prazo: '6–9 semanas',
-    resumo: 'O mesmo agendamento pelo WhatsApp Telessaúde. No app MediQuo Saúde, a consulta aparece na agenda, o push lembra no horário e o botão "Iniciar consulta" leva à videochamada. O médico atende pelo MediQuo Pro (Espanha) e anexa o parecer.',
-    construir: ['Tudo da Rota 1', 'Consulta marcada pelo WhatsApp aparecendo no app MediQuo Saúde', 'Push de lembrete, complementar ao WhatsApp', 'Botão "Iniciar consulta" no horário'],
+    resumo: 'O mesmo agendamento pelo secretário no WhatsApp, registrado no MediQuo Pro. No app MediQuo Saúde, a consulta aparece na agenda, o push lembra no horário e o colaborador inicia pelo botão "Iniciar consulta". O médico atende pelo MediQuo Pro (Espanha) e emite o parecer, que o RH baixa no ID.',
+    construir: ['Tudo da Rota 1', 'Consulta registrada pelo secretário aparecendo no app MediQuo Saúde', 'Push de lembrete, complementar ao WhatsApp', 'Botão "Iniciar consulta" no horário'],
     reaproveita: ['Tela Agendamento do app MediQuo Saúde', 'Videoconsulta existente do app', 'Agenda de profissionais do Pro'],
-    riscos: ['Só vale para o app MediQuo Saúde (white labels seguem a Rota 1)', 'Permissão de push negada (o lembrete segue pelo WhatsApp)', 'Fila de agenda em picos de atestados'],
+    riscos: ['Só vale para o app MediQuo Saúde (white labels seguem a Rota 1)', 'Permissão de push negada (o lembrete segue pelo WhatsApp)', 'Agendamento manual pelo secretário em picos de atestados'],
     etapas: [
       ENVIO,
       painelPro({ id: 'painel' }),
-      {
-        id: 'convite', screen: 'pro-caso', params: { modo: 'mediquo_saude' }, actor: 'medico', produto: 'MediQuo Pro',
-        label: 'Equipe convida pelo WhatsApp', titulo: 'Convite pelo WhatsApp Telessaúde',
-        nota: 'Escolha os horários da agenda e envie a mensagem do número Telessaúde para o celular informado pelo RH. O app MediQuo Saúde complementa com push e botão de consulta.',
-      },
-      {
-        id: 'whatsapp', screen: 'whatsapp', actor: 'colaborador', produto: 'WhatsApp Telessaúde',
-        label: 'Colaborador marca no WhatsApp', titulo: 'Horário combinado pelo WhatsApp',
-        nota: 'Toque em um dos horários como se fosse o colaborador. A confirmação entra na agenda do Pro, aparece no app MediQuo Saúde e muda o status no ID.',
-      },
+      contatoWhatsapp('Depois, registre o horário no MediQuo Pro. O app MediQuo Saúde complementa com push e botão de consulta.'),
+      registroHorario('mediquo_saude'),
       {
         id: 'push', screen: 'app-push', actor: 'colaborador', produto: 'App MediQuo Saúde',
         label: 'Colaborador recebe o push', titulo: 'Push de lembrete na tela bloqueada',
@@ -154,18 +176,14 @@ export const ROTAS = Object.freeze([
       {
         id: 'iniciar', screen: 'app-consulta', actor: 'colaborador', produto: 'App MediQuo Saúde',
         label: 'Colaborador inicia consulta', titulo: 'Botão "Iniciar consulta" no app MediQuo Saúde',
-        nota: 'A consulta marcada pelo WhatsApp aparece na tela Agendamento. No horário, toque em "Iniciar consulta".',
+        nota: 'A consulta registrada pelo secretário aparece na tela Agendamento. No horário, toque em "Iniciar consulta".',
       },
       {
         id: 'parecer', screen: 'pro-consulta', params: { app: 'mediquo_saude' }, actor: 'medico', produto: 'MediQuo Pro',
-        label: 'Atende pelo Pro (Espanha) e anexa parecer', titulo: 'Atendimento pelo MediQuo Pro (Espanha) e parecer',
-        nota: 'A consulta aparece na lista de agendamentos do MediQuo Pro e a videochamada acontece no MediQuo Pro (Espanha), no chat do paciente. Depois, escolha o desfecho e anexe o parecer em PDF (ou gere o padrão).',
+        label: 'Médico atende e emite o parecer', titulo: 'Atendimento pelo MediQuo Pro (Espanha) e parecer médico',
+        nota: 'A consulta aparece na lista de agendamentos do MediQuo Pro e a videochamada acontece no MediQuo Pro (Espanha), no chat do paciente. Depois, escolha o desfecho e anexe o parecer médico em PDF (ou gere o padrão).',
       },
-      {
-        id: 'painel-rh', screen: 'id-painel', actor: 'rh', produto: 'ID',
-        label: 'RH vê painel e baixa parecer', titulo: 'Painel de custo, dias e pareceres no ID',
-        nota: 'Troque o período para ver dias de atestado e custo estimado por colaborador. Baixe o parecer do caso em PDF. Sem CID nem dado clínico.',
-      },
+      PAINEL_RH,
     ],
   },
 ]);

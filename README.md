@@ -1,11 +1,12 @@
 # Gestão de Absenteísmo · Protótipo de jornada
 
 Protótipo navegável (somente front-end, sem backend) da jornada de acompanhamento de atestados:
-o RH envia o atestado e o celular do colaborador no **ID**, o médico e a gestão acompanham no **MediQuo Pro**,
-a equipe marca a consulta pelo **WhatsApp Telessaúde** e o colaborador é atendido pelo app de telessaúde.
+o RH envia o atestado e o celular do colaborador no **ID**; o caso chega no **MediQuo Pro** para o médico e para o **secretário**;
+o secretário chama o colaborador em conversa direta pelo **WhatsApp Telessaúde**, combina dia e horário e registra a consulta no MediQuo Pro;
+no horário marcado, o colaborador procura o médico no app de telessaúde e faz a consulta.
 
 O atendimento nunca acontece por Google Meet: o médico atende sempre pelo **MediQuo Pro (Espanha)** (PEP, `web.mediquo.com/chat`), como nos atendimentos de hoje.
-Depois da consulta, o médico anexa o **parecer** em PDF no MediQuo Pro e o RH baixa no ID, onde também vê o painel de custo e dias de atestado por período.
+Depois da consulta, o médico emite o **parecer médico** em PDF no MediQuo Pro e o RH baixa no ID, onde também vê o painel de custo e dias de atestado por período.
 
 Todos os dados são fictícios. Nenhum nome, CPF ou CNPJ corresponde a pessoa ou empresa real.
 
@@ -20,29 +21,29 @@ python3 -m http.server 8080
 
 Também funciona em qualquer hospedagem estática (GitHub Pages, Vercel, Netlify).
 
-É possível abrir direto numa etapa pelo hash da URL, no formato `#<rota>-<etapa>`, por exemplo `#app-4` (Rota 2, etapa 4) ou `#whatsapp-7` (Rota 1, etapa 7).
+É possível abrir direto numa etapa pelo hash da URL, no formato `#<rota>-<etapa>`, por exemplo `#app-5` (Rota 2, etapa 5) ou `#whatsapp-7` (Rota 1, etapa 7).
 
 ## Rotas da jornada
 
 | Rota | Nome | Resumo | Esforço |
 |---|---|---|---|
 | 0 | Registro e triagem | RH envia, médico valida o documento. Sem consulta. | Baixo · 2–3 semanas |
-| 1 | WhatsApp + app white label | Convite e horário pelo WhatsApp Telessaúde; o colaborador atende a videochamada no chat do app de telessaúde da empresa (sem push e sem botão); o médico atende pelo MediQuo Pro (Espanha) e anexa o parecer; o RH vê o painel e baixa o parecer no ID. | Baixo · 4–6 semanas |
-| 2 | WhatsApp + MediQuo Saúde | Mesmo agendamento pelo WhatsApp; no app MediQuo Saúde a consulta aparece na agenda, um push complementar lembra no horário e o botão "Iniciar consulta" leva à videochamada. | Médio · 6–9 semanas |
+| 1 | WhatsApp + app white label | O secretário marca a consulta em conversa direta pelo WhatsApp Telessaúde e registra o horário no Pro; no horário, o colaborador procura o médico no chat do app de telessaúde da empresa (sem push e sem botão) e inicia a videochamada; o médico atende pelo MediQuo Pro (Espanha) e emite o parecer; o RH baixa o parecer no ID. | Baixo · 4–6 semanas |
+| 2 | WhatsApp + MediQuo Saúde | Mesmo agendamento pelo secretário; no app MediQuo Saúde a consulta aparece na agenda, um push complementar lembra no horário e o colaborador inicia pelo botão "Iniciar consulta". | Médio · 6–9 semanas |
 
 Etapas das Rotas 1 e 2:
 
 1. RH envia o atestado e o celular com WhatsApp do colaborador no ID.
-2. Atestado e contato chegam no MediQuo Pro para o médico e para a gestão, com o painel de indicadores.
-3. A equipe escolhe horários da agenda e envia o convite pelo WhatsApp Telessaúde.
-4. O colaborador escolhe o horário no WhatsApp; a confirmação entra na agenda do Pro.
-5. Rota 1: o colaborador atende a chamada no app white label. Rota 2: push de lembrete e botão "Iniciar consulta" no app MediQuo Saúde.
-6. O médico atende pelo MediQuo Pro (Espanha) e anexa o parecer (PDF próprio ou parecer padrão gerado).
-7. O RH vê no ID dias de atestado e custo estimado por colaborador no período escolhido e baixa o parecer.
+2. Atestado e contato chegam no MediQuo Pro para o médico e para o secretário, com o painel de indicadores.
+3. O secretário chama o colaborador pelo WhatsApp Telessaúde e combina dia e horário em conversa direta.
+4. O secretário registra o horário no MediQuo Pro: a consulta entra na agenda do médico, a confirmação sai no WhatsApp e o status muda no ID.
+5. Rota 1: no horário, o colaborador procura o médico nas conversas do app white label e inicia a videochamada pelo chat. Rota 2: push de lembrete e botão "Iniciar consulta" no app MediQuo Saúde.
+6. O médico atende pelo MediQuo Pro (Espanha) e emite o parecer médico (PDF próprio ou parecer padrão gerado).
+7. O RH baixa o parecer médico no ID e vê dias de atestado e custo estimado por colaborador no período escolhido.
 
 O custo estimado é o custo mensal do colaborador ÷ 30 × dias de atestado dentro do período.
 
-As rotas e a trilha de etapas (só números) ficam na barra lateral esquerda; os números são clicáveis, e as setas do teclado também navegam. O estado é compartilhado entre as telas: o que o RH envia aparece no Pro, e o que o colaborador agenda aparece no ID.
+As rotas e a trilha de etapas (só números) ficam na barra lateral esquerda; os números são clicáveis, e as setas do teclado também navegam. O estado é compartilhado entre as telas: o que o RH envia aparece no Pro, e o que o secretário registra aparece na agenda do médico, no app e no ID.
 
 ## Leitura do atestado em PDF
 
@@ -54,6 +55,7 @@ As rotas e a trilha de etapas (só números) ficam na barra lateral esquerda; os
 ## Privacidade (LGPD)
 
 - O CID fica oculto para o RH no ID, inclusive no texto lido do PDF.
+- O secretário vê contato, status e agenda; a conversa no WhatsApp não cita diagnóstico. Em produção, o perfil de secretário no Pro não deve ter acesso a CID nem ao prontuário.
 - O RH recebe apenas status, datas, o parecer e uma recomendação administrativa padronizada. O parecer padrão não traz CID nem dado clínico, e o formulário lembra o médico disso ao anexar um PDF próprio.
 - A nota clínica fica no prontuário e nunca vai para o ID.
 - O logger (`js/core/logger.js`) mascara nome, CPF, CID, telefone e texto do atestado.
@@ -70,14 +72,14 @@ css/
   id.css              Visual do ID
   pro.css             Visual do MediQuo Pro
   app.css             App MediQuo Saúde, tela bloqueada e videochamada simulados
-  whatsapp.css        WhatsApp Telessaúde e app white label (genéricos, sem logotipos)
+  whatsapp.css        WhatsApp do secretário e app white label (genéricos, sem logotipos)
 js/
   main.js             Registro das telas e inicialização
   core/               DOM e escape, formatação, logger, estado em memória
   data/               Dados fictícios, dicionário de CID e regras de triagem
   pdf/                Extração (PDF.js), parser, gerador de atestados e de pareceres (jsPDF)
   journey/            Definição das rotas, navegação e comparativo
-  screens/            Telas do ID (envio, casos, painel), Pro, WhatsApp e apps
+  screens/            Telas do ID (envio, casos, painel), Pro (painel, registro do horário, consulta), WhatsApp e apps
   ui/                 Toast, overlays, visualizador de PDF e download do parecer
 vendor/
   pdf.worker.min.js   Worker do PDF.js 3.11.174
