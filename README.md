@@ -21,7 +21,7 @@ python3 -m http.server 8080
 
 Também funciona em qualquer hospedagem estática (GitHub Pages, Vercel, Netlify).
 
-É possível abrir direto numa etapa pelo hash da URL, no formato `#<rota>-<etapa>`, por exemplo `#app-6` (Rota 2, etapa 6) ou `#whatsapp-8` (Rota 1, etapa 8).
+É possível abrir direto numa etapa pelo hash da URL, no formato `#<rota>-<etapa>`, por exemplo `#app-6` (Rota 2, etapa 6) ou `#whatsapp-6` (Rota 1, etapa 6).
 
 ## Rotas da jornada
 
@@ -36,11 +36,12 @@ Etapas das Rotas 1 e 2:
 1. RH envia o atestado e o celular com WhatsApp do colaborador no ID.
 2. Atestado e contato chegam no MediQuo Pro para o médico e para o secretário, com o painel de indicadores.
 3. No caso aberto no MediQuo Pro, o secretário toca em "Abrir conversa no WhatsApp".
-4. No WhatsApp, a mensagem de apresentação já vem pronta; o secretário envia e combina dia e horário em conversa direta.
-5. O secretário registra o horário no MediQuo Pro: a consulta entra na agenda do médico, a confirmação sai no WhatsApp e o status muda no ID.
-6. Rota 1: no horário, o colaborador procura o médico nas conversas do app white label e inicia a videochamada pelo chat. Rota 2: push de lembrete e botão "Iniciar consulta" no app MediQuo Saúde (duas etapas).
-7. O médico atende pelo MediQuo Pro (Espanha) e escreve o parecer médico em campo aberto; o PDF é gerado a partir do texto (ou o médico anexa um PDF próprio).
-8. O RH baixa o parecer médico no ID e vê dias de atestado e custo estimado por colaborador no período escolhido. Se a jornada chega aqui sem parecer, o protótipo simula o envio pelo médico.
+4. No WhatsApp, a mensagem de apresentação já vem pronta; o secretário envia, combina dia e horário em conversa direta e toca em "Registrar no MediQuo Pro": a consulta entra na agenda do médico, a confirmação sai na conversa e o status muda no ID.
+5. Só na Rota 2: push de lembrete e botão "Iniciar consulta" no app MediQuo Saúde (duas etapas). Na Rota 1, o colaborador procura o médico no chat do app white label, sem etapa própria no protótipo.
+6. O médico atende pelo MediQuo Pro (Espanha) e escreve o parecer médico em campo aberto; o PDF é gerado a partir do texto (ou o médico anexa um PDF próprio).
+7. O RH baixa o parecer médico no ID e vê dias de atestado e custo estimado por colaborador no período escolhido. Se a jornada chega aqui sem parecer, o protótipo simula o envio pelo médico.
+
+A Rota 1 tem 6 etapas e a Rota 2, 8.
 
 O custo estimado é o custo mensal do colaborador ÷ 30 × dias de atestado dentro do período.
 
@@ -73,14 +74,14 @@ css/
   id.css              Visual do ID
   pro.css             Visual do MediQuo Pro
   app.css             App MediQuo Saúde, tela bloqueada e videochamada simulados
-  whatsapp.css        WhatsApp do secretário e app white label (genéricos, sem logotipos)
+  whatsapp.css        WhatsApp do secretário (genérico, sem logotipos)
 js/
   main.js             Registro das telas e inicialização
   core/               DOM e escape, formatação, logger, estado em memória
   data/               Dados fictícios, dicionário de CID e regras de triagem
   pdf/                Extração (PDF.js), parser, gerador de atestados e de pareceres (jsPDF)
   journey/            Definição das rotas, navegação e comparativo
-  screens/            Telas do ID (envio, casos, painel), Pro (painel, registro do horário, consulta), WhatsApp e apps
+  screens/            Telas do ID (envio, casos, painel), Pro (painel, contato e registro do horário, consulta), WhatsApp e app MediQuo Saúde
   ui/                 Toast, overlays, visualizador de PDF e download do parecer
 vendor/
   pdf.worker.min.js   Worker do PDF.js 3.11.174

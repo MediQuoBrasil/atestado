@@ -15,7 +15,6 @@ import { proCasoScreen } from './screens/pro-caso.js';
 import { proConsultaScreen } from './screens/pro-consulta.js';
 import { idPainelScreen } from './screens/id-painel.js';
 import { appConsultaScreen, appPushScreen } from './screens/app-cliente.js';
-import { appWhiteLabelScreen } from './screens/app-whitelabel.js';
 import { whatsappScreen } from './screens/whatsapp.js';
 
 const log = createLogger('main');
@@ -39,7 +38,6 @@ const boot = () => {
   registerScreen('id-painel', idPainelScreen);
   registerScreen('whatsapp', whatsappScreen);
   registerScreen('app-consulta', appConsultaScreen);
-  registerScreen('app-whitelabel', appWhiteLabelScreen);
 
   initOverlays();
   initNavigator({

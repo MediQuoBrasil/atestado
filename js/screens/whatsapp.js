@@ -7,8 +7,10 @@
 import { delegate, esc, icon } from '../core/dom.js';
 import { createLogger } from '../core/logger.js';
 import { fmtSlot, fmtTelefone, initials } from '../core/format.js';
-import { getColaborador, getFocusCase, iniciarContato } from '../core/store.js';
-import { APPS_CONSULTA_FRASE } from '../data/rules.js';
+import {
+  getColaborador, getFocusCase, iniciarContato, proximoDiaUtil, registrarAgendamento,
+} from '../core/store.js';
+import { APPS_CONSULTA_FRASE, HORARIO_SUGERIDO } from '../data/rules.js';
 import { GESTOR_SAUDE, MEDICA_PROGRAMA } from '../data/seed.js';
 
 const log = createLogger('whatsapp');
@@ -69,7 +71,7 @@ const conversa = (caso) => {
   const inicio = `<div class="wa-day">Hoje</div>${msg('out', abertura(nome), '16:05')}${msg('in', 'Oi! Pode ser amanhã à tarde, depois das 14h?', '16:09')}`;
   if (!ag.slot) {
     return `${inicio}${msg('out', 'Combinado! Vou reservar na agenda médica e já te confirmo por aqui.', '16:10')}
-      <div class="wa-hint">${icon('calendar', 'ic-sm')}<span>Registre no MediQuo Pro o horário combinado. A confirmação sai por aqui.</span><button type="button" class="wa-btn" data-action="ir-registro">Registrar no MediQuo Pro</button></div>`;
+      <div class="wa-hint">${icon('calendar', 'ic-sm')}<span>Registre no MediQuo Pro o horário combinado (${esc(fmtSlot(`${proximoDiaUtil()}T${HORARIO_SUGERIDO}`))}). A confirmação sai por aqui.</span><button type="button" class="wa-btn" data-action="registrar">Registrar no MediQuo Pro</button></div>`;
   }
   return `${inicio}${msg('out', confirmacao(ag), '16:12')}${msg('in', 'Perfeito, obrigado!', '16:13')}`;
 };
@@ -108,7 +110,15 @@ const bind = (root, ctx) => {
       }
       ctx.toast('Mensagem enviada. O status no ID mudou para "Em contato".', 'success');
     },
-    'ir-registro': () => ctx.goTo('registro'),
+    registrar: () => {
+      const result = registrarAgendamento(getFocusCase().id, { data: proximoDiaUtil(), hora: HORARIO_SUGERIDO });
+      if (!result.ok) {
+        log.warn('Registro de horário recusado', { motivo: result.error });
+        ctx.toast(result.error, 'error');
+        return;
+      }
+      ctx.toast('Consulta na agenda do médico. Confirmação enviada e status atualizado no ID.', 'success');
+    },
   });
 };
 

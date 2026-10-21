@@ -1,6 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   WhatsApp Telessaúde visto pelo secretário (genérico, sem logotipos) e
-   app de telessaúde white label (Rota 1: o colaborador procura o médico no chat).
+   WhatsApp Telessaúde visto pelo secretário (genérico, sem logotipos).
    ═══════════════════════════════════════════════════════════ */
 
 .phone-status.wa-bar { background: #0b5c50; color: #fff; }
@@ -39,26 +38,3 @@
 .wa-input { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 8px 8px; padding: 10px 14px; border-radius: 99px; background: #fff; color: #8696a0; font-size: 14px; }
 .wa-mic { width: 34px; height: 34px; margin: -6px -8px -6px 0; border-radius: 50%; display: grid; place-items: center; background: var(--wa-accent); color: #fff; }
 .wa-btn { padding: 11px 16px; border: 0; border-radius: 99px; background: var(--wa-accent); color: #fff; font: 500 14.5px 'Roboto', sans-serif; cursor: pointer; }
-
-/* App white label (marca neutra) */
-.app.wl { --a-primary: #0f766e; --a-navy: #134e4a; }
-.wl-chat { display: flex; flex-direction: column; gap: 8px; padding: 4px 14px 16px; }
-.wl-sys { align-self: center; padding: 6px 12px; border-radius: 99px; background: #e2ece9; font-size: 12.5px; color: #34514c; text-align: center; }
-.wl-msg { align-self: flex-start; max-width: 85%; padding: 10px 12px; border-radius: 14px 14px 14px 4px; background: #fff; border: 1px solid var(--a-line); font-size: 14px; line-height: 1.4; }
-.wl-msg small { display: block; margin-bottom: 2px; font-size: 12px; font-weight: 500; color: var(--a-primary); }
-.wl-search { display: flex; align-items: center; gap: 8px; margin: 0 14px 12px; padding: 10px 14px; border-radius: 99px; background: #fff; border: 1px solid var(--a-line); color: var(--a-muted); font-size: 14px; }
-.wl-list { display: grid; margin: 0 14px 12px; border: 1px solid var(--a-line); border-radius: 16px; background: #fff; overflow: hidden; }
-.wl-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: 0; background: none; font: inherit; text-align: left; color: inherit; }
-.wl-item + .wl-item { border-top: 1px solid var(--a-line); }
-button.wl-item { cursor: pointer; }
-.wl-item.hl { background: #f0faf8; }
-.wl-item.hl:hover { background: #e2f3ef; }
-.wl-item.muted { opacity: .6; }
-.wl-item-txt { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.wl-item-txt b { font-size: 15px; font-weight: 500; color: var(--a-navy); }
-.wl-item-txt small { font-size: 12.5px; color: var(--a-muted); }
-.wl-av { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: #d5ece7; color: var(--a-primary); font-size: 14px; font-weight: 500; }
-.wl-chathead { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--a-line); background: #fff; }
-.wl-icon { width: 40px; height: 40px; border: 0; border-radius: 50%; display: grid; place-items: center; background: none; color: var(--a-primary); cursor: pointer; flex-shrink: 0; }
-.wl-video { background: #13805a; color: #fff; animation: ring 1.6s ease-in-out infinite; }
-@keyframes ring { 50% { box-shadow: 0 0 0 8px rgba(20, 184, 166, .2); } }

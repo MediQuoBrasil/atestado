@@ -13,7 +13,7 @@ import {
   STATUS, TODAY, atualizarCaso, empresaDoCaso, getColaborador, getFocusCase, listarCasos, proximoDiaUtil, registrarAgendamento,
 } from '../core/store.js';
 import { lookupCid } from '../data/cid.js';
-import { APPS_CONSULTA, JANELA_AGENDA } from '../data/rules.js';
+import { APPS_CONSULTA, HORARIO_SUGERIDO, JANELA_AGENDA } from '../data/rules.js';
 import { MEDICA_PROGRAMA } from '../data/seed.js';
 import { abrirAtestado } from '../ui/pdf-viewer.js';
 import { goProHome, proShell } from './pro-shell.js';
@@ -22,9 +22,6 @@ const log = createLogger('pro.caso');
 
 /** Status em que a consulta já foi registrada na agenda. */
 const REGISTRADOS = new Set(['agendado', 'em_consulta', 'em_acompanhamento', 'concluido', 'encaminhado']);
-
-/** Horário sugerido no formulário (o que o colaborador pediu na conversa). */
-const HORA_SUGERIDA = '14:00';
 
 /**
  * App da consulta conforme o modo da etapa.
@@ -143,7 +140,7 @@ const cardAcao = (caso, modo) => {
             <dt>App</dt><dd>${esc(APPS_CONSULTA[app])}</dd>
           </dl>
           <div class="pro-callout">${icon('messageCircle')}<span>A confirmação com o horário e o passo a passo saiu no WhatsApp. ${esc(ladoColaborador)}</span></div>
-          <button type="button" class="pro-btn" data-action="ir-app">Ver o app do colaborador ${icon('chevronRight', 'ic-sm')}</button>
+          <button type="button" class="pro-btn" data-action="ir-app">Seguir para a consulta ${icon('chevronRight', 'ic-sm')}</button>
         </div>
       </div>`;
   }
@@ -163,7 +160,7 @@ const cardAcao = (caso, modo) => {
       <div class="pro-card-body pro-stack">
         <div class="pro-split">
           <div class="pro-field"><label for="agData">Data</label><input id="agData" class="pro-input" type="date" min="${esc(TODAY)}" value="${esc(proximoDiaUtil())}" required></div>
-          <div class="pro-field"><label for="agHora">Horário</label><input id="agHora" class="pro-input" type="time" min="${esc(JANELA_AGENDA.inicio)}" max="${esc(JANELA_AGENDA.fim)}" step="900" value="${esc(HORA_SUGERIDA)}" required></div>
+          <div class="pro-field"><label for="agHora">Horário</label><input id="agHora" class="pro-input" type="time" min="${esc(JANELA_AGENDA.inicio)}" max="${esc(JANELA_AGENDA.fim)}" step="900" value="${esc(HORARIO_SUGERIDO)}" required></div>
         </div>
         <p class="pro-label">Agenda de ${esc(MEDICA_PROGRAMA.nome)} · dias úteis, das ${esc(JANELA_AGENDA.inicio)} às ${esc(JANELA_AGENDA.fim)}</p>
         <div class="pro-callout">${icon('video')}<span>${esc(ladoColaborador)} O médico atende pelo MediQuo Pro (Espanha).</span></div>
@@ -212,8 +209,8 @@ const bind = (root, ctx) => {
     registrar,
     'ir-whatsapp': () => ctx.goTo('whatsapp'),
     'ir-app': () => {
-      // Etapa seguinte ao registro do horário (app do colaborador), qualquer que seja a etapa atual.
-      const i = ctx.rota.etapas.findIndex((e) => e.id === 'registro');
+      // Etapa seguinte à conversa no WhatsApp, onde o horário é registrado, qualquer que seja a etapa atual.
+      const i = ctx.rota.etapas.findIndex((e) => e.id === 'whatsapp');
       const step = i >= 0 ? ctx.rota.etapas[i + 1] : undefined;
       if (step) ctx.goTo(step.id); else ctx.next();
     },

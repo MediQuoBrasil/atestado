@@ -161,6 +161,9 @@ export const custoAfastamento = (custoMensal, dias) => (custoMensal > 0 && dias 
 /** Janela de horários em que o secretário pode registrar consultas na agenda do médico. */
 export const JANELA_AGENDA = Object.freeze({ inicio: '08:00', fim: '18:00' });
 
+/** Horário que o colaborador pede na conversa simulada ("amanhã à tarde, depois das 14h"). */
+export const HORARIO_SUGERIDO = '14:00';
+
 /** Apps em que o colaborador faz a videochamada (rótulos exibidos). */
 export const APPS_CONSULTA = Object.freeze({
   white_label: 'App de telessaúde da empresa',

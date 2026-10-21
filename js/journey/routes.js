@@ -87,22 +87,6 @@ const contatoWhatsapp = (complemento) => ({
   nota: `A conversa abre com a mensagem pronta. Envie; a conversa é direta e o colaborador responde com o dia e horário que prefere. ${complemento}`,
 });
 
-/**
- * Registro do horário combinado no MediQuo Pro (Rotas 1 e 2).
- * @param {import('../core/store.js').AppConsulta} modo
- * @returns {Etapa}
- */
-const registroHorario = (modo) => ({
-  id: 'registro',
-  screen: 'pro-caso',
-  params: { modo },
-  actor: 'secretario',
-  produto: 'MediQuo Pro',
-  label: 'Secretário registra o horário',
-  titulo: 'Horário combinado registrado no MediQuo Pro',
-  nota: 'Informe a data e o horário que o colaborador escolheu. A consulta entra na agenda do médico, a confirmação sai no WhatsApp e o status muda no ID.',
-});
-
 /** Etapa final, comum às Rotas 1 e 2. */
 const PAINEL_RH = Object.freeze({
   id: 'painel-rh',
@@ -155,13 +139,7 @@ export const ROTAS = Object.freeze([
       ENVIO,
       painelPro({ id: 'painel' }),
       abrirConversa('white_label'),
-      contatoWhatsapp('Depois, registre o horário no MediQuo Pro.'),
-      registroHorario('white_label'),
-      {
-        id: 'chamada', screen: 'app-whitelabel', actor: 'colaborador', produto: 'App de telessaúde',
-        label: 'Colaborador procura o médico', titulo: 'Colaborador procura o médico no chat do app',
-        nota: 'Sem push e sem botão "Iniciar consulta". No horário, toque na conversa com a médica e depois na câmera para iniciar a videochamada. Encerre para seguir.',
-      },
+      contatoWhatsapp('Depois, toque em "Registrar no MediQuo Pro": o horário entra na agenda do médico e a confirmação sai na conversa.'),
       {
         id: 'parecer', screen: 'pro-consulta', params: { app: 'white_label' }, actor: 'medico', produto: 'MediQuo Pro',
         label: 'Médico atende e emite o parecer', titulo: 'Atendimento pelo MediQuo Pro (Espanha) e parecer médico',
@@ -184,8 +162,7 @@ export const ROTAS = Object.freeze([
       ENVIO,
       painelPro({ id: 'painel' }),
       abrirConversa('mediquo_saude'),
-      contatoWhatsapp('Depois, registre o horário no MediQuo Pro. O app MediQuo Saúde complementa com push e botão de consulta.'),
-      registroHorario('mediquo_saude'),
+      contatoWhatsapp('Depois, toque em "Registrar no MediQuo Pro": o horário entra na agenda do médico e a confirmação sai na conversa. O app MediQuo Saúde complementa com push e botão de consulta.'),
       {
         id: 'push', screen: 'app-push', actor: 'colaborador', produto: 'App MediQuo Saúde',
         label: 'Colaborador recebe o push', titulo: 'Push de lembrete na tela bloqueada',
