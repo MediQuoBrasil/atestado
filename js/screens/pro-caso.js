@@ -143,7 +143,7 @@ const cardAcao = (caso, modo) => {
             <dt>App</dt><dd>${esc(APPS_CONSULTA[app])}</dd>
           </dl>
           <div class="pro-callout">${icon('messageCircle')}<span>A confirmação com o horário e o passo a passo saiu no WhatsApp. ${esc(ladoColaborador)}</span></div>
-          <button type="button" class="pro-btn" data-action="next">Ver o app do colaborador ${icon('chevronRight', 'ic-sm')}</button>
+          <button type="button" class="pro-btn" data-action="ir-app">Ver o app do colaborador ${icon('chevronRight', 'ic-sm')}</button>
         </div>
       </div>`;
   }
@@ -152,8 +152,8 @@ const cardAcao = (caso, modo) => {
       <div class="pro-card">
         <div class="pro-card-head"><div><h3 class="pro-card-title">Marcar a consulta</h3><p class="pro-card-sub">Secretário · WhatsApp ${esc(fmtTelefone(caso.telefone))}</p></div>${badge(caso.status)}</div>
         <div class="pro-card-body pro-stack">
-          <div class="pro-callout warn">${icon('alert')}<span>Converse com ${esc(primeiroNome)} pelo WhatsApp antes de registrar o horário.</span></div>
-          <button type="button" class="pro-btn" data-action="ir-whatsapp">${icon('messageCircle', 'ic-sm')} Abrir a conversa no WhatsApp</button>
+          <div class="pro-callout">${icon('messageCircle')}<span>O RH informou o WhatsApp de ${esc(primeiroNome)}. Abra a conversa para combinar dia e horário; depois registre aqui o horário combinado.</span></div>
+          <button type="button" class="pro-btn" data-action="ir-whatsapp">${icon('messageCircle', 'ic-sm')} Abrir conversa no WhatsApp</button>
         </div>
       </div>`;
   }
@@ -210,9 +210,12 @@ const bind = (root, ctx) => {
     voltar: () => goProHome(ctx),
     next: () => ctx.next(),
     registrar,
-    'ir-whatsapp': () => {
-      const step = ctx.rota.etapas.find((e) => e.screen === 'whatsapp');
-      if (step) ctx.goTo(step.id);
+    'ir-whatsapp': () => ctx.goTo('whatsapp'),
+    'ir-app': () => {
+      // Etapa seguinte ao registro do horário (app do colaborador), qualquer que seja a etapa atual.
+      const i = ctx.rota.etapas.findIndex((e) => e.id === 'registro');
+      const step = i >= 0 ? ctx.rota.etapas[i + 1] : undefined;
+      if (step) ctx.goTo(step.id); else ctx.next();
     },
     validar: () => {
       const caso = getFocusCase();

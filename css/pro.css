@@ -180,12 +180,6 @@
 .pro-motivos { margin: 0; padding-left: 1.1rem; font-size: .8125rem; color: var(--p-gray-600); }
 
 /* Consulta */
-.pro-radio { display: grid; gap: .5rem; }
-.pro-radio label { display: flex; gap: .625rem; align-items: flex-start; padding: .625rem .75rem; border: 1px solid var(--p-border); border-radius: .5rem; cursor: pointer; font-size: .8125rem; }
-.pro-radio label:has(input:checked) { border-color: var(--p-primary); background: rgba(74, 30, 167, .05); }
-.pro-radio input { margin-top: 3px; accent-color: var(--p-primary); }
-.pro-radio b { display: block; font-weight: 600; }
-.pro-radio small { color: var(--p-muted-fg); }
 .pro-textarea { width: 100%; min-height: 84px; padding: .5rem .75rem; border-radius: .375rem; border: 1px solid var(--p-input); font-size: .8125rem; resize: vertical; outline: none; }
 .pro-textarea:focus { border-color: var(--p-primary); box-shadow: 0 0 0 1px var(--p-primary); }
 .pro-label { font-size: .75rem; font-weight: 500; color: var(--p-muted-fg); }

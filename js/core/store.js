@@ -7,10 +7,12 @@ import { createLogger } from './logger.js';
 import {
   addDays, brToIso, digits, fmtSlot, parseIsoDate,
 } from './format.js';
-import { COLABORADORES, EMPRESAS, MEDICOS_EMISSORES, SEED_ROWS, TODAY } from '../data/seed.js';
+import {
+  COLABORADORES, EMPRESAS, MEDICA_PROGRAMA, MEDICOS_EMISSORES, SEED_ROWS, TODAY,
+} from '../data/seed.js';
 import { lookupCid } from '../data/cid.js';
 import {
-  DESFECHOS, JANELA_AGENDA, STATUS, triar,
+  DESFECHOS, JANELA_AGENDA, PARECER_SIMULADO, STATUS, triar, validarTextoParecer,
 } from '../data/rules.js';
 
 const log = createLogger('store');
@@ -34,16 +36,15 @@ const log = createLogger('store');
 
 /**
  * @typedef {Object} Desfecho
- * @property {'manter'|'retorno_antecipado'|'encaminhar_mt'|'acompanhamento'} tipo
- * @property {string} recomendacaoRH Texto administrativo permitido ao RH (sem dado clínico).
- * @property {string} registradoEm   ISO date.
+ * @property {string} texto        Parecer médico em texto livre, enviado ao RH (sem dado clínico).
+ * @property {string} registradoEm ISO date.
  */
 
 /**
  * @typedef {Object} Parecer
  * @property {string} arquivoNome
- * @property {Uint8Array|null} bytes  PDF anexado pelo médico; null nos casos da semente (gerado sob demanda).
- * @property {'upload'|'gerado'|'seed'} origem
+ * @property {Uint8Array|null} bytes  PDF do médico; null na semente e no parecer simulado (gerado sob demanda).
+ * @property {'upload'|'gerado'|'seed'|'simulado'} origem
  * @property {string} anexadoEm       ISO date.
  */
 
@@ -143,7 +144,7 @@ const parecerSemente = (id, status, dataInicio) => {
   if (!tipo) return { desfecho: null, parecer: null };
   const quando = addDays(dataInicio, 2) < TODAY ? addDays(dataInicio, 2) : TODAY;
   return {
-    desfecho: { tipo, recomendacaoRH: DESFECHOS[tipo].rh, registradoEm: quando },
+    desfecho: { texto: DESFECHOS[tipo].rh, registradoEm: quando },
     parecer: {
       arquivoNome: `parecer_${id.toLowerCase()}.pdf`, bytes: null, origem: 'seed', anexadoEm: quando,
     },
@@ -303,14 +304,14 @@ export const atualizarCaso = (id, patch, evento) => {
 
 /**
  * @typedef {Object} ParecerInput
- * @property {string} tipo                 Chave de DESFECHOS.
+ * @property {string} texto                Parecer médico em texto livre (vai ao RH).
  * @property {string} arquivoNome
  * @property {Uint8Array} bytes            PDF do parecer.
  * @property {'upload'|'gerado'} origem
  */
 
 /**
- * Registra o desfecho e anexa o parecer que o RH baixa no ID (validação equivalente à do servidor).
+ * Registra o parecer médico (texto livre + PDF) que o RH baixa no ID (validação equivalente à do servidor).
  * @param {string} id
  * @param {ParecerInput} input
  * @returns {{ok: true, caso: Caso} | {ok: false, error: string}}
@@ -318,24 +319,46 @@ export const atualizarCaso = (id, patch, evento) => {
 export const registrarParecer = (id, input) => {
   const caso = state.casos.find((c) => c.id === id);
   if (!caso) return { ok: false, error: 'Caso não encontrado.' };
-  const def = DESFECHOS[input.tipo];
-  if (!def) return { ok: false, error: 'Escolha o desfecho da consulta.' };
+  const texto = validarTextoParecer(input.texto);
+  if (!texto.ok) return texto;
   if (!(input.bytes instanceof Uint8Array) || input.bytes.byteLength === 0) return { ok: false, error: 'Anexe o parecer em PDF.' };
   if (String.fromCharCode(...input.bytes.slice(0, 5)) !== '%PDF-') return { ok: false, error: 'O parecer precisa ser um PDF válido.' };
   if (!['upload', 'gerado'].includes(input.origem)) return { ok: false, error: 'Origem do parecer inválida.' };
   const arquivoNome = String(input.arquivoNome ?? '').replace(/[^\w.\-À-ÿ ]/g, '').slice(0, 120) || `parecer_${id.toLowerCase()}.pdf`;
 
-  caso.status = /** @type {keyof STATUS} */ (def.status);
-  caso.desfecho = { tipo: /** @type {Desfecho['tipo']} */ (input.tipo), recomendacaoRH: def.rh, registradoEm: TODAY };
+  caso.status = 'concluido';
+  caso.desfecho = { texto: texto.value, registradoEm: TODAY };
   caso.parecer = {
     arquivoNome, bytes: input.bytes, origem: input.origem, anexadoEm: TODAY,
   };
-  caso.timeline.push({ ts: nowStamp(), actor: 'medico', text: `Parecer anexado no MediQuo Pro e disponível no ID (${def.label})` });
+  caso.timeline.push({ ts: nowStamp(), actor: 'medico', text: 'Parecer médico emitido no MediQuo Pro e disponível no ID' });
   log.info('Parecer registrado', {
-    id, tipo: input.tipo, origem: input.origem, bytes: input.bytes.byteLength,
+    id, origem: input.origem, bytes: input.bytes.byteLength, chars: texto.value.length,
   });
   emit();
   return { ok: true, caso };
+};
+
+/**
+ * Simula o parecer enviado pelo médico quando a jornada chega ao ID sem ele (só no protótipo).
+ * O PDF é gerado sob demanda no download, como nos casos da semente.
+ * @param {string} id
+ * @param {{silent?: boolean}} [opts] silent evita notificar assinantes (uso durante render).
+ * @returns {Caso|null}
+ */
+export const simularParecer = (id, opts = {}) => {
+  const caso = state.casos.find((c) => c.id === id);
+  if (!caso) return null;
+  if (caso.parecer) return caso;
+  caso.status = 'concluido';
+  caso.desfecho = { texto: PARECER_SIMULADO, registradoEm: TODAY };
+  caso.parecer = {
+    arquivoNome: `parecer_${id.toLowerCase()}.pdf`, bytes: null, origem: 'simulado', anexadoEm: TODAY,
+  };
+  caso.timeline.push({ ts: nowStamp(), actor: 'medico', text: `Parecer médico emitido pela ${MEDICA_PROGRAMA.nome} no MediQuo Pro (simulação)` });
+  log.info('Parecer simulado', { id });
+  if (!opts.silent) emit();
+  return caso;
 };
 
 /**

@@ -104,3 +104,6 @@ export const TODAY = '2026-10-13';
 
 /** Médica do programa que atende as consultas de acompanhamento (fictícia). */
 export const MEDICA_PROGRAMA = Object.freeze({ nome: 'Dra. Beatriz Sampaio', crm: 'CRM-SP 214587' });
+
+/** Gestor de saúde que faz o papel de secretário e conversa com o colaborador pelo WhatsApp. */
+export const GESTOR_SAUDE = Object.freeze({ nome: 'Vinicius' });

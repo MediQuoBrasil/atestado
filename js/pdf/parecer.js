@@ -18,8 +18,7 @@ const log = createLogger('pdf.parecer');
  * @property {string} dataFim         ISO, fim do afastamento.
  * @property {number} dias
  * @property {string} dataConsulta    Texto já formatado (ex.: "qua., 14 de outubro · 09:30 – 10:00") ou "—".
- * @property {string} desfecho        Rótulo do desfecho.
- * @property {string} recomendacao    Texto administrativo destinado ao RH.
+ * @property {string} parecer         Parecer médico em texto livre, destinado ao RH.
  * @property {string} emitidoEm       ISO.
  * @property {string} medico
  * @property {string} crm
@@ -73,27 +72,31 @@ export const gerarParecerPdf = (d) => {
     ['Empresa:', d.empresa],
     ['Afastamento:', `${fmtDate(d.dataInicio)} a ${fmtDate(d.dataFim)} (${d.dias} dias)`],
     ['Consulta:', d.dataConsulta],
-    ['Desfecho:', d.desfecho],
   ].forEach(([label, value], i) => linha(doc, label, value, 62 + i * 10));
 
   doc.setFont('helvetica', 'bold');
-  doc.text('Recomendação à empresa', 20, 130);
+  doc.text('Parecer médico', 20, 120);
   doc.setFont('helvetica', 'normal');
-  doc.text(doc.splitTextToSize(d.recomendacao, 170), 20, 138, { lineHeightFactor: 1.5 });
+  // O texto é livre (até 1.200 caracteres); o restante da página se posiciona depois dele.
+  const linhas = doc.splitTextToSize(d.parecer, 170);
+  doc.text(linhas, 20, 128, { lineHeightFactor: 1.5 });
+  let y = 128 + linhas.length * 5.6 + 10;
 
   doc.setFontSize(8.5);
   doc.setTextColor(90, 90, 100);
-  doc.text(doc.splitTextToSize('Este parecer não contém diagnóstico, CID ou informações clínicas. O registro clínico da consulta permanece no prontuário da MediQuo, conforme a LGPD (dado de saúde é dado pessoal sensível).', 170), 20, 162);
+  doc.text(doc.splitTextToSize('Este parecer não contém diagnóstico, CID ou informações clínicas. O registro clínico da consulta permanece no prontuário da MediQuo, conforme a LGPD (dado de saúde é dado pessoal sensível).', 170), 20, y);
   doc.setTextColor(0, 0, 0);
 
+  y += 20;
   doc.setFontSize(10);
-  doc.text(`Emitido em ${fmtDate(d.emitidoEm)}`, 20, 186);
+  doc.text(`Emitido em ${fmtDate(d.emitidoEm)}`, 20, y);
+  y += 26;
   doc.setDrawColor(60, 60, 70);
-  doc.line(65, 214, 145, 214);
+  doc.line(65, y, 145, y);
   doc.setFont('helvetica', 'bold');
-  doc.text(d.medico, 105, 220, { align: 'center' });
+  doc.text(d.medico, 105, y + 6, { align: 'center' });
   doc.setFont('helvetica', 'normal');
-  doc.text(d.crm, 105, 225, { align: 'center' });
+  doc.text(d.crm, 105, y + 11, { align: 'center' });
 
   const bytes = new Uint8Array(doc.output('arraybuffer'));
   done();

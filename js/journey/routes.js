@@ -57,6 +57,22 @@ const painelPro = (over) => ({
 });
 
 /**
+ * Secretário abre o caso no MediQuo Pro e, de lá, a conversa no WhatsApp (Rotas 1 e 2).
+ * @param {import('../core/store.js').AppConsulta} modo
+ * @returns {Etapa}
+ */
+const abrirConversa = (modo) => ({
+  id: 'contato',
+  screen: 'pro-caso',
+  params: { modo },
+  actor: 'secretario',
+  produto: 'MediQuo Pro',
+  label: 'Secretário abre a conversa',
+  titulo: 'Secretário abre a conversa a partir do MediQuo Pro',
+  nota: 'O caso mostra o WhatsApp informado pelo RH. Toque em "Abrir conversa no WhatsApp" para ir à mensagem.',
+});
+
+/**
  * Conversa do secretário com o colaborador pelo WhatsApp (Rotas 1 e 2).
  * @param {string} complemento Como a consulta acontece no app da rota.
  * @returns {Etapa}
@@ -68,7 +84,7 @@ const contatoWhatsapp = (complemento) => ({
   produto: 'WhatsApp Telessaúde',
   label: 'Secretário chama no WhatsApp',
   titulo: 'Secretário combina a consulta pelo WhatsApp',
-  nota: `Você está no WhatsApp do secretário. Envie a primeira mensagem para o celular informado pelo RH; a conversa é direta e o colaborador responde com o dia e horário que prefere. ${complemento}`,
+  nota: `A conversa abre com a mensagem pronta. Envie; a conversa é direta e o colaborador responde com o dia e horário que prefere. ${complemento}`,
 });
 
 /**
@@ -95,7 +111,7 @@ const PAINEL_RH = Object.freeze({
   produto: 'ID',
   label: 'RH baixa o parecer médico',
   titulo: 'Parecer médico para download no ID',
-  nota: 'Baixe o parecer médico do caso em PDF. Troque o período para ver dias de atestado e custo estimado por colaborador. Sem CID nem dado clínico.',
+  nota: 'O parecer médico do caso já aparece aqui (se a consulta não foi feita nas etapas anteriores, o parecer é simulado). Baixe em PDF. Troque o período para ver dias de atestado e custo estimado por colaborador. Sem CID nem dado clínico.',
 });
 
 /** @type {ReadonlyArray<Rota>} */
@@ -138,6 +154,7 @@ export const ROTAS = Object.freeze([
     etapas: [
       ENVIO,
       painelPro({ id: 'painel' }),
+      abrirConversa('white_label'),
       contatoWhatsapp('Depois, registre o horário no MediQuo Pro.'),
       registroHorario('white_label'),
       {
@@ -148,7 +165,7 @@ export const ROTAS = Object.freeze([
       {
         id: 'parecer', screen: 'pro-consulta', params: { app: 'white_label' }, actor: 'medico', produto: 'MediQuo Pro',
         label: 'Médico atende e emite o parecer', titulo: 'Atendimento pelo MediQuo Pro (Espanha) e parecer médico',
-        nota: 'A consulta está na agenda do Pro e o paciente chama pelo chat; o atendimento acontece no MediQuo Pro (Espanha). Depois, escolha o desfecho e anexe o parecer médico em PDF (ou gere o padrão). A nota clínica fica no prontuário.',
+        nota: 'A consulta está na agenda do Pro e o paciente chama pelo chat; o atendimento acontece no MediQuo Pro (Espanha). Depois, escreva o parecer médico no campo aberto e envie (o PDF é gerado a partir do texto, ou anexe o seu). A nota clínica fica no prontuário.',
       },
       PAINEL_RH,
     ],
@@ -166,6 +183,7 @@ export const ROTAS = Object.freeze([
     etapas: [
       ENVIO,
       painelPro({ id: 'painel' }),
+      abrirConversa('mediquo_saude'),
       contatoWhatsapp('Depois, registre o horário no MediQuo Pro. O app MediQuo Saúde complementa com push e botão de consulta.'),
       registroHorario('mediquo_saude'),
       {
@@ -181,7 +199,7 @@ export const ROTAS = Object.freeze([
       {
         id: 'parecer', screen: 'pro-consulta', params: { app: 'mediquo_saude' }, actor: 'medico', produto: 'MediQuo Pro',
         label: 'Médico atende e emite o parecer', titulo: 'Atendimento pelo MediQuo Pro (Espanha) e parecer médico',
-        nota: 'A consulta aparece na lista de agendamentos do MediQuo Pro e a videochamada acontece no MediQuo Pro (Espanha), no chat do paciente. Depois, escolha o desfecho e anexe o parecer médico em PDF (ou gere o padrão).',
+        nota: 'A consulta aparece na lista de agendamentos do MediQuo Pro e a videochamada acontece no MediQuo Pro (Espanha), no chat do paciente. Depois, escreva o parecer médico no campo aberto e envie (o PDF é gerado a partir do texto, ou anexe o seu).',
       },
       PAINEL_RH,
     ],

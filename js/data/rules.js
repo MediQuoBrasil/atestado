@@ -123,6 +123,30 @@ export const diasNoPeriodo = (inicioIso, dias, deIso, ateIso) => {
   return ini > fim ? 0 : diffDays(ini, fim) + 1;
 };
 
+/** Tamanho aceito para o parecer médico em texto livre (vai ao RH e ao PDF de uma página). */
+export const PARECER_TEXTO = Object.freeze({ min: 20, max: 1200 });
+
+/** Parecer usado quando o protótipo simula o envio pelo médico (sem dado clínico). */
+export const PARECER_SIMULADO = 'Colaborador avaliado em teleconsulta de acompanhamento. A condição atual é compatível com o período de afastamento informado no atestado, sem necessidade de prolongamento. Retorno às atividades previsto para o dia seguinte ao fim do atestado, sem restrições. Seguimos à disposição para nova avaliação, se necessário.';
+
+/** Código no formato CID-10 (ex.: M54.5) ou a sigla CID: não podem ir ao RH. */
+const CID_NO_TEXTO = /\bCID\b|\b[A-Z]\d{2}(?:\.\d{1,2})?\b/;
+
+/**
+ * Valida o parecer em texto livre que o RH recebe. Não detecta diagnóstico escrito por extenso,
+ * por isso o formulário também lembra o médico de não incluir dado clínico.
+ * @param {string} texto
+ * @returns {{ok: true, value: string} | {ok: false, error: string}}
+ */
+export const validarTextoParecer = (texto) => {
+  // Mantém as quebras de parágrafo do médico; só normaliza espaços e linhas em branco repetidas.
+  const value = String(texto ?? '').replace(/\r\n?/g, '\n').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  if (value.length < PARECER_TEXTO.min) return { ok: false, error: `Escreva o parecer médico (mínimo de ${PARECER_TEXTO.min} caracteres).` };
+  if (value.length > PARECER_TEXTO.max) return { ok: false, error: `O parecer pode ter até ${PARECER_TEXTO.max} caracteres.` };
+  if (CID_NO_TEXTO.test(value)) return { ok: false, error: 'O parecer vai ao RH: retire o CID ou o código de diagnóstico.' };
+  return { ok: true, value };
+};
+
 /** Divisor do custo mensal para chegar ao custo por dia corrido de afastamento. */
 export const DIAS_CUSTO_MES = 30;
 

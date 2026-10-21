@@ -9,7 +9,7 @@ import { createLogger } from '../core/logger.js';
 import { fmtSlot, fmtTelefone, initials } from '../core/format.js';
 import { getColaborador, getFocusCase, iniciarContato } from '../core/store.js';
 import { APPS_CONSULTA_FRASE } from '../data/rules.js';
-import { MEDICA_PROGRAMA } from '../data/seed.js';
+import { GESTOR_SAUDE, MEDICA_PROGRAMA } from '../data/seed.js';
 
 const log = createLogger('whatsapp');
 
@@ -33,12 +33,11 @@ const msg = (lado, html, hora) => `<div class="wa-msg ${lado}"><div class="wa-tx
 const appDaRota = (ctx) => (ctx.rota.id === 'app' ? 'mediquo_saude' : 'white_label');
 
 /**
- * Primeira mensagem do secretário. Não cita diagnóstico.
+ * Primeira mensagem do secretário (gestor de saúde). Não cita diagnóstico.
  * @param {string} nome Primeiro nome do colaborador.
- * @param {import('../core/store.js').AppConsulta} app
  * @returns {string} HTML escapado.
  */
-const abertura = (nome, app) => `Olá, ${esc(nome)}! Aqui é o secretário da equipe de Telessaúde da MediQuo. Recebemos seu atestado pela sua empresa e queremos acompanhar sua recuperação numa consulta rápida por vídeo com a ${esc(MEDICA_PROGRAMA.nome)}, pelo ${esc(APPS_CONSULTA_FRASE[app])}. Que dia e horário ficam bons para você?`;
+const abertura = (nome) => `Olá, ${esc(nome)}! Meu nome é ${esc(GESTOR_SAUDE.nome)}, sou gestor de saúde do seu aplicativo de telessaúde, tudo bem? Recebemos seu atestado pela sua empresa e queremos acompanhar seu estado de saúde e recuperação de forma mais próxima em uma consulta médica com nossos especialistas. Poderíamos agendar? Que dia e horário ficam bons para você?`;
 
 /**
  * Confirmação enviada depois do registro no MediQuo Pro, com o caminho para a consulta.
@@ -56,38 +55,36 @@ const confirmacao = (ag) => {
 /**
  * Conversa entre secretário e colaborador.
  * @param {import('../core/store.js').Caso} caso
- * @param {import('../journey/navigator.js').ScreenCtx} ctx
  * @returns {string}
  */
-const conversa = (caso, ctx) => {
+const conversa = (caso) => {
   const nome = (getColaborador(caso.colaboradorId)?.nome ?? '').split(' ')[0];
   const ag = caso.agendamento;
   if (!ag || !COM_CONVERSA.has(caso.status)) {
     return `
       <div class="wa-day">Contato informado pelo RH no ID</div>
-      <div class="wa-msg out draft"><div class="wa-txt">${abertura(nome, appDaRota(ctx))}</div><span class="wa-time">rascunho</span></div>
+      <div class="wa-msg out draft"><div class="wa-txt">${abertura(nome)}</div><span class="wa-time">rascunho</span></div>
       <button type="button" class="wa-btn wa-send" data-action="enviar">${icon('send', 'ic-sm')} Enviar mensagem</button>`;
   }
-  const inicio = `<div class="wa-day">Hoje</div>${msg('out', abertura(nome, ag.app), '16:05')}${msg('in', 'Oi! Pode ser amanhã à tarde, depois das 14h?', '16:09')}`;
+  const inicio = `<div class="wa-day">Hoje</div>${msg('out', abertura(nome), '16:05')}${msg('in', 'Oi! Pode ser amanhã à tarde, depois das 14h?', '16:09')}`;
   if (!ag.slot) {
-    return `${inicio}${msg('out', 'Combinado! Vou reservar na agenda da médica e já te confirmo por aqui.', '16:10')}
+    return `${inicio}${msg('out', 'Combinado! Vou reservar na agenda médica e já te confirmo por aqui.', '16:10')}
       <div class="wa-hint">${icon('calendar', 'ic-sm')}<span>Registre no MediQuo Pro o horário combinado. A confirmação sai por aqui.</span><button type="button" class="wa-btn" data-action="ir-registro">Registrar no MediQuo Pro</button></div>`;
   }
   return `${inicio}${msg('out', confirmacao(ag), '16:12')}${msg('in', 'Perfeito, obrigado!', '16:13')}`;
 };
 
 /**
- * @param {import('../journey/navigator.js').ScreenCtx} ctx
  * @returns {string}
  */
-const render = (ctx) => {
+const render = () => {
   const caso = getFocusCase();
   const nome = getColaborador(caso.colaboradorId)?.nome ?? 'Colaborador';
   return `
     <div class="phone-status wa-bar"><span>16:13</span><span class="ps-icons">5G <i></i> 51%</span></div>
     <div class="wa">
       <div class="wa-head">${icon('arrowLeft')}<span class="wa-avatar" aria-hidden="true">${esc(initials(nome))}</span><div><b>${esc(nome)}</b><small>${esc(fmtTelefone(caso.telefone))}</small></div></div>
-      <div class="wa-chat" data-scroll-key="wa">${conversa(caso, ctx)}</div>
+      <div class="wa-chat" data-scroll-key="wa">${conversa(caso)}</div>
       <div class="wa-input"><span>Mensagem</span><span class="wa-mic">${icon('mic', 'ic-sm')}</span></div>
     </div>
     <div class="phone-nav" aria-hidden="true"><span></span><span></span><span></span></div>`;
@@ -111,10 +108,7 @@ const bind = (root, ctx) => {
       }
       ctx.toast('Mensagem enviada. O status no ID mudou para "Em contato".', 'success');
     },
-    'ir-registro': () => {
-      const step = ctx.rota.etapas.find((e) => e.screen === 'pro-caso');
-      if (step) ctx.goTo(step.id);
-    },
+    'ir-registro': () => ctx.goTo('registro'),
   });
 };
 

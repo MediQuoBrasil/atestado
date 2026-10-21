@@ -1,8 +1,8 @@
 /**
  * @file MediQuo Pro · Consulta de absenteísmo e parecer (Rotas 1 e 2).
  * Lista de agendamentos e atendimento pelo MediQuo Pro (Espanha), o PEP onde a videochamada acontece hoje.
- * Depois da consulta, o médico anexa o parecer em PDF, que o RH baixa no ID.
- * A nota clínica fica no prontuário; ao RH vão apenas o parecer e um texto administrativo padronizado.
+ * Depois da consulta, o médico escreve o parecer em campo aberto; o PDF (gerado do texto ou anexado) vai ao RH no ID.
+ * A nota clínica fica no prontuário; ao RH vai apenas o parecer, sem dado clínico.
  */
 
 import { delegate, esc, icon } from '../core/dom.js';
@@ -14,7 +14,7 @@ import {
   STATUS, TODAY, atualizarCaso, getColaborador, getFlag, getFocusCase, listarCasos, registrarParecer, setFlag,
 } from '../core/store.js';
 import { lookupCid } from '../data/cid.js';
-import { APPS_CONSULTA, DESFECHOS } from '../data/rules.js';
+import { APPS_CONSULTA, PARECER_TEXTO, validarTextoParecer } from '../data/rules.js';
 import { PdfError, lerArquivoPdf } from '../pdf/extract.js';
 import { abrirAtestado } from '../ui/pdf-viewer.js';
 import { gerarParecerDoCaso } from '../ui/parecer.js';
@@ -31,7 +31,7 @@ const log = createLogger('pro.consulta');
 
 /** Estado local do formulário de parecer (por caso). */
 const form = {
-  casoId: '', tipo: 'acompanhamento', nota: '', /** @type {AnexoParecer|null} */ anexo: null, erro: '',
+  casoId: '', parecer: '', nota: '', /** @type {AnexoParecer|null} */ anexo: null, erro: '',
 };
 
 const AGENDADOS = new Set(['agendado', 'em_consulta']);
@@ -116,7 +116,7 @@ const painelAtendimentoPep = (caso, app) => {
   if (aberto) badge = '<span class="badge ok">Atendimento aberto</span>';
   else if (caso.status === 'em_consulta') badge = '<span class="badge primary">Paciente aguardando</span>';
   const acao = aberto
-    ? `<div class="pro-mini"><span>Atendimento aberto no MediQuo Pro (Espanha)</span><b>Ao terminar a videochamada, anexe o parecer ao lado.</b></div>
+    ? `<div class="pro-mini"><span>Atendimento aberto no MediQuo Pro (Espanha)</span><b>Ao terminar a videochamada, escreva o parecer ao lado.</b></div>
        <button type="button" class="pro-btn outline" data-action="atender-pep">${icon('video', 'ic-sm')} Abrir o MediQuo Pro (Espanha) de novo</button>`
     : `<button type="button" class="pro-btn" data-action="atender-pep">${icon('video', 'ic-sm')} Atender pelo MediQuo Pro (Espanha)</button>`;
   return `
@@ -132,24 +132,24 @@ const painelAtendimentoPep = (caso, app) => {
 };
 
 /**
- * Arquivo do parecer anexado (ou ações para anexar).
+ * PDF próprio anexado (ou ação para anexar). Sem anexo, o PDF é gerado a partir do texto.
  * @returns {string}
  */
 const blocoAnexo = () => {
   if (form.anexo) {
     return `
-      <div class="pro-pdf-thumb"><span class="doc">PDF</span><div class="meta"><b>${esc(form.anexo.nome)}</b>${(form.anexo.bytes.byteLength / 1024).toFixed(1)} KB · ${form.anexo.origem === 'gerado' ? 'parecer padrão gerado' : 'enviado do seu computador'}</div><button type="button" class="pro-btn outline sm" data-action="remover-anexo">${icon('x', 'ic-sm')} Remover</button></div>`;
+      <div class="pro-pdf-thumb"><span class="doc">PDF</span><div class="meta"><b>${esc(form.anexo.nome)}</b>${(form.anexo.bytes.byteLength / 1024).toFixed(1)} KB · enviado do seu computador</div><button type="button" class="pro-btn outline sm" data-action="remover-anexo">${icon('x', 'ic-sm')} Remover</button></div>`;
   }
   return `
-    <div class="pro-split">
-      <label class="pro-btn outline" for="parecerInput">${icon('paperclip', 'ic-sm')} Anexar PDF</label>
+    <div class="pro-split" style="align-items:center">
+      <label class="pro-btn outline" for="parecerInput">${icon('paperclip', 'ic-sm')} Anexar PDF próprio</label>
       <input id="parecerInput" type="file" accept="application/pdf,.pdf" hidden>
-      <button type="button" class="pro-btn outline" data-action="gerar-parecer">${icon('sparkles', 'ic-sm')} Gerar parecer padrão</button>
+      <span class="pro-label">Sem anexo, o PDF é gerado a partir do texto.</span>
     </div>`;
 };
 
 /**
- * Formulário de desfecho e parecer.
+ * Parecer médico em campo aberto.
  * @param {import('../core/store.js').Caso} caso
  * @returns {string}
  */
@@ -160,31 +160,23 @@ const painelParecer = (caso) => {
         <div class="pro-card-head"><div><h3 class="pro-card-title">Parecer enviado ao RH</h3><p class="pro-card-sub">${esc(fmtDate(caso.parecer.anexadoEm))}</p></div><span class="badge ${STATUS[caso.status].tone}">${esc(STATUS[caso.status].label)}</span></div>
         <div class="pro-card-body pro-stack">
           <div class="pro-pdf-thumb"><span class="doc">PDF</span><div class="meta"><b>${esc(caso.parecer.arquivoNome)}</b>Disponível para download no ID</div></div>
-          <div class="pro-mini"><span>Recomendação ao RH</span><b>${esc(DESFECHOS[caso.desfecho.tipo]?.label ?? '')}</b><span>${esc(caso.desfecho.recomendacaoRH)}</span></div>
-          <button type="button" class="pro-btn" data-action="next">Ver painel do RH no ID ${icon('chevronRight', 'ic-sm')}</button>
+          <div class="pro-mini"><span>Parecer médico</span><span style="white-space:pre-line">${esc(caso.desfecho.texto)}</span></div>
+          <button type="button" class="pro-btn" data-action="next">Ver o parecer no ID ${icon('chevronRight', 'ic-sm')}</button>
         </div>
       </div>`;
   }
-  const tipos = ['acompanhamento', 'manter', 'encaminhar_mt'];
-  const desc = {
-    manter: 'Condição clínica compatível com o período do atestado.',
-    acompanhamento: 'Nova conversa ou especialidade antes de concluir.',
-    encaminhar_mt: 'Questão de aptidão, homologação ou retorno ocupacional.',
-  };
-  if (!tipos.includes(form.tipo)) [form.tipo] = tipos;
   return `
     <div class="pro-card">
-      <div class="pro-card-head"><div><h3 class="pro-card-title">Desfecho e parecer</h3><p class="pro-card-sub">O parecer vai para o RH no ID; a nota clínica fica no prontuário</p></div></div>
+      <div class="pro-card-head"><div><h3 class="pro-card-title">Parecer médico</h3><p class="pro-card-sub">O parecer vai para o RH no ID; a nota clínica fica no prontuário</p></div></div>
       <form class="pro-card-body pro-stack" data-form="parecer" novalidate>
-        <div class="pro-radio">${tipos.map((t) => `<label><input type="radio" name="tipo" value="${t}" data-field="tipo" ${form.tipo === t ? 'checked' : ''}><span><b>${esc(DESFECHOS[t].label)}</b><small>${esc(desc[t])}</small></span></label>`).join('')}</div>
+        <div><label class="pro-label" for="parecerTexto">Parecer médico (vai ao RH)</label><textarea id="parecerTexto" class="pro-textarea" data-field="parecer" rows="6" maxlength="${PARECER_TEXTO.max}" placeholder="Ex.: Colaborador avaliado em teleconsulta de acompanhamento. Condição compatível com o período do atestado; retorno previsto para…">${esc(form.parecer)}</textarea></div>
+        <div class="pro-callout warn">${icon('lock')}<span>O RH lê este texto e baixa o PDF no ID. Não inclua diagnóstico, CID ou detalhes clínicos.</span></div>
         <div><label class="pro-label" for="nota">Nota clínica (prontuário, não vai ao RH)</label><textarea id="nota" class="pro-textarea" data-field="nota" maxlength="2000" placeholder="Evolução, sintomas atuais, capacidade funcional, sinais de alerta, conduta…">${esc(form.nota)}</textarea></div>
         <div class="pro-stack" style="gap:.5rem">
-          <p class="pro-label">Parecer para o RH (PDF)</p>
+          <p class="pro-label">PDF do parecer</p>
           ${blocoAnexo()}
-          <div class="pro-callout warn">${icon('lock')}<span>O RH baixa este arquivo no ID. Não inclua diagnóstico, CID ou detalhes clínicos.</span></div>
           ${form.erro ? `<p class="pro-err" role="alert">${esc(form.erro)}</p>` : ''}
         </div>
-        <div class="pro-mini"><span>Recomendação que acompanha o parecer</span><b>${esc(DESFECHOS[form.tipo].label)}</b><span>${esc(DESFECHOS[form.tipo].rh)}</span></div>
         <button type="submit" class="pro-btn">${icon('send', 'ic-sm')} Enviar parecer ao RH</button>
       </form>
     </div>`;
@@ -246,18 +238,6 @@ const bind = (root, ctx) => {
   /** Re-render pelo store (mantém o fluxo de assinatura único). */
   const refresh = () => atualizarCaso(getFocusCase().id, {});
 
-  /** Gera o parecer padrão com o desfecho escolhido. */
-  const gerar = () => {
-    const caso = getFocusCase();
-    try {
-      form.anexo = { nome: `parecer_${caso.id.toLowerCase()}.pdf`, bytes: gerarParecerDoCaso(caso, form.tipo), origem: 'gerado' };
-      form.erro = '';
-    } catch (err) {
-      log.error('Falha ao gerar parecer', { caso: caso.id, message: err.message });
-      form.erro = 'Não foi possível gerar o parecer. Anexe um PDF ou recarregue a página.';
-    }
-  };
-
   const offClick = delegate(root, 'click', {
     'ver-pdf': () => abrirAtestado(getFocusCase()),
     voltar: () => goProHome(ctx),
@@ -282,7 +262,6 @@ const bind = (root, ctx) => {
         agendamento: { canal: 'whatsapp', app: appDaConsulta(caso, ctx), slot },
       }, { actor: 'sistema', text: 'Consulta iniciada (simulação)' });
     },
-    'gerar-parecer': () => { gerar(); refresh(); },
     'remover-anexo': () => { form.anexo = null; refresh(); },
   });
   const onChange = async (event) => {
@@ -300,38 +279,44 @@ const bind = (root, ctx) => {
       refresh();
       return;
     }
-    if (el.dataset.field === 'tipo') {
-      form.tipo = el.value;
-      // O parecer padrão reflete o desfecho; regenera se ele já tinha sido gerado.
-      if (form.anexo?.origem === 'gerado') gerar();
-      refresh();
-    }
   };
   const onInput = (event) => {
     const el = /** @type {HTMLTextAreaElement} */ (event.target);
     if (el.dataset.field === 'nota') form.nota = el.value;
+    if (el.dataset.field === 'parecer') form.parecer = el.value;
   };
   const onSubmit = (event) => {
     if (!/** @type {HTMLElement} */ (event.target).matches('[data-form="parecer"]')) return;
     event.preventDefault();
     const caso = getFocusCase();
-    if (!form.anexo) {
-      form.erro = 'Anexe o parecer em PDF ou gere o parecer padrão.';
+    const texto = validarTextoParecer(form.parecer);
+    if (!texto.ok) {
+      form.erro = texto.error;
+      refresh();
+      return;
+    }
+    /** @type {AnexoParecer} */
+    let pdf;
+    try {
+      pdf = form.anexo ?? { nome: `parecer_${caso.id.toLowerCase()}.pdf`, bytes: gerarParecerDoCaso(caso, texto.value), origem: 'gerado' };
+    } catch (err) {
+      log.error('Falha ao gerar parecer', { caso: caso.id, message: err.message });
+      form.erro = 'Não foi possível gerar o PDF. Anexe um PDF próprio ou recarregue a página.';
       refresh();
       return;
     }
     const result = registrarParecer(caso.id, {
-      tipo: form.tipo, arquivoNome: form.anexo.nome, bytes: form.anexo.bytes, origem: form.anexo.origem,
+      texto: texto.value, arquivoNome: pdf.nome, bytes: pdf.bytes, origem: pdf.origem,
     });
     if (!result.ok) {
       form.erro = result.error;
       refresh();
       return;
     }
-    log.info('Parecer enviado', { tipo: form.tipo, notaChars: form.nota.length });
+    log.info('Parecer enviado', { origem: pdf.origem, parecerChars: texto.value.length, notaChars: form.nota.length });
     ctx.toast('Parecer enviado. O RH já pode baixar no ID.', 'success');
     Object.assign(form, {
-      tipo: 'acompanhamento', nota: '', anexo: null, erro: '',
+      parecer: '', nota: '', anexo: null, erro: '',
     });
   };
   root.addEventListener('change', onChange);

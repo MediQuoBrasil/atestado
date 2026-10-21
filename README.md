@@ -8,7 +8,7 @@ no horário marcado, o colaborador procura o médico no app de telessaúde e faz
 O atendimento nunca acontece por Google Meet: o médico atende sempre pelo **MediQuo Pro (Espanha)** (PEP, `web.mediquo.com/chat`), como nos atendimentos de hoje.
 Depois da consulta, o médico emite o **parecer médico** em PDF no MediQuo Pro e o RH baixa no ID, onde também vê o painel de custo e dias de atestado por período.
 
-Todos os dados são fictícios. Nenhum nome, CPF ou CNPJ corresponde a pessoa ou empresa real.
+Todos os dados são fictícios. Nenhum nome, CPF ou CNPJ corresponde a pessoa ou empresa real, exceto o primeiro nome do gestor de saúde que assina a mensagem do WhatsApp.
 
 ## Como rodar
 
@@ -21,7 +21,7 @@ python3 -m http.server 8080
 
 Também funciona em qualquer hospedagem estática (GitHub Pages, Vercel, Netlify).
 
-É possível abrir direto numa etapa pelo hash da URL, no formato `#<rota>-<etapa>`, por exemplo `#app-5` (Rota 2, etapa 5) ou `#whatsapp-7` (Rota 1, etapa 7).
+É possível abrir direto numa etapa pelo hash da URL, no formato `#<rota>-<etapa>`, por exemplo `#app-6` (Rota 2, etapa 6) ou `#whatsapp-8` (Rota 1, etapa 8).
 
 ## Rotas da jornada
 
@@ -35,11 +35,12 @@ Etapas das Rotas 1 e 2:
 
 1. RH envia o atestado e o celular com WhatsApp do colaborador no ID.
 2. Atestado e contato chegam no MediQuo Pro para o médico e para o secretário, com o painel de indicadores.
-3. O secretário chama o colaborador pelo WhatsApp Telessaúde e combina dia e horário em conversa direta.
-4. O secretário registra o horário no MediQuo Pro: a consulta entra na agenda do médico, a confirmação sai no WhatsApp e o status muda no ID.
-5. Rota 1: no horário, o colaborador procura o médico nas conversas do app white label e inicia a videochamada pelo chat. Rota 2: push de lembrete e botão "Iniciar consulta" no app MediQuo Saúde.
-6. O médico atende pelo MediQuo Pro (Espanha) e emite o parecer médico (PDF próprio ou parecer padrão gerado).
-7. O RH baixa o parecer médico no ID e vê dias de atestado e custo estimado por colaborador no período escolhido.
+3. No caso aberto no MediQuo Pro, o secretário toca em "Abrir conversa no WhatsApp".
+4. No WhatsApp, a mensagem de apresentação já vem pronta; o secretário envia e combina dia e horário em conversa direta.
+5. O secretário registra o horário no MediQuo Pro: a consulta entra na agenda do médico, a confirmação sai no WhatsApp e o status muda no ID.
+6. Rota 1: no horário, o colaborador procura o médico nas conversas do app white label e inicia a videochamada pelo chat. Rota 2: push de lembrete e botão "Iniciar consulta" no app MediQuo Saúde (duas etapas).
+7. O médico atende pelo MediQuo Pro (Espanha) e escreve o parecer médico em campo aberto; o PDF é gerado a partir do texto (ou o médico anexa um PDF próprio).
+8. O RH baixa o parecer médico no ID e vê dias de atestado e custo estimado por colaborador no período escolhido. Se a jornada chega aqui sem parecer, o protótipo simula o envio pelo médico.
 
 O custo estimado é o custo mensal do colaborador ÷ 30 × dias de atestado dentro do período.
 
@@ -56,7 +57,7 @@ As rotas e a trilha de etapas (só números) ficam na barra lateral esquerda; os
 
 - O CID fica oculto para o RH no ID, inclusive no texto lido do PDF.
 - O secretário vê contato, status e agenda; a conversa no WhatsApp não cita diagnóstico. Em produção, o perfil de secretário no Pro não deve ter acesso a CID nem ao prontuário.
-- O RH recebe apenas status, datas, o parecer e uma recomendação administrativa padronizada. O parecer padrão não traz CID nem dado clínico, e o formulário lembra o médico disso ao anexar um PDF próprio.
+- O RH recebe apenas status, datas e o parecer médico. O parecer é texto livre: a validação recusa CID e códigos de diagnóstico, e o formulário lembra o médico de não incluir dado clínico.
 - A nota clínica fica no prontuário e nunca vai para o ID.
 - O logger (`js/core/logger.js`) mascara nome, CPF, CID, telefone e texto do atestado.
 

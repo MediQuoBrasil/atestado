@@ -1,6 +1,7 @@
 /**
  * @file ID · Absenteísmo › Painel e pareceres (Rotas 1 e 2).
- * O RH vê dias de atestado e custo estimado num período, e baixa o parecer anexado pelo médico.
+ * O RH vê dias de atestado e custo estimado num período, e baixa o parecer emitido pelo médico.
+ * Se a jornada chega aqui sem parecer, o protótipo simula o envio pelo médico.
  * Nada de CID, nota clínica ou conversa da consulta.
  */
 
@@ -12,10 +13,10 @@ import {
   addDays, fmtBRL, fmtCnpj, fmtDate, fmtSlot, parseIsoDate, plural,
 } from '../core/format.js';
 import {
-  TODAY, empresaDoCaso, getCaso, getColaborador, getFocusCase, listarCasos,
+  TODAY, empresaDoCaso, getCaso, getColaborador, getFocusCase, listarCasos, simularParecer,
 } from '../core/store.js';
 import {
-  APPS_CONSULTA, DESFECHOS, DIAS_CUSTO_MES, custoAfastamento, diasNoPeriodo,
+  APPS_CONSULTA, DIAS_CUSTO_MES, custoAfastamento, diasNoPeriodo,
 } from '../data/rules.js';
 import { baixarParecer } from '../ui/parecer.js';
 import { pill, timeline } from './id-casos.js';
@@ -77,29 +78,27 @@ const agregar = (de, ate) => {
 };
 
 /**
- * Card do parecer do caso acompanhado pela jornada.
+ * Card do parecer do caso acompanhado pela jornada (sempre com parecer: real ou simulado).
  * @param {import('../core/store.js').Caso} caso
- * @param {import('../journey/navigator.js').ScreenCtx} ctx
  * @returns {string}
  */
-const cardParecer = (caso, ctx) => {
+const cardParecer = (caso) => {
   const col = getColaborador(caso.colaboradorId);
   const d = caso.desfecho;
-  const stepConsulta = ctx.rota.etapas.find((e) => e.screen === 'pro-consulta')?.id ?? '';
   const app = caso.agendamento ? APPS_CONSULTA[caso.agendamento.app] : '';
   const body = caso.parecer && d ? `
     <div class="id-success">
-      <h3>${icon('shield', 'ic-sm')} ${esc(DESFECHOS[d.tipo]?.label ?? 'Parecer disponível')}</h3>
-      <p>${esc(d.recomendacaoRH)}</p>
+      <h3>${icon('shield', 'ic-sm')} Parecer médico disponível</h3>
+      <p style="white-space:pre-line">${esc(d.texto)}</p>
       <dl class="id-kv">
         <dt>Consulta</dt><dd>${esc(caso.agendamento?.slot ? fmtSlot(caso.agendamento.slot) : '—')}${app ? ` · ${esc(app)}` : ''}</dd>
-        <dt>Parecer anexado</dt><dd>${esc(fmtDate(caso.parecer.anexadoEm))}</dd>
+        <dt>Emitido em</dt><dd>${esc(fmtDate(caso.parecer.anexadoEm))}</dd>
         <dt>Retorno previsto</dt><dd>${esc(fmtDate(addDays(caso.dataInicio, caso.dias)))}</dd>
       </dl>
       <div class="id-actions"><button type="button" class="id-btn" data-action="baixar" data-id="${esc(caso.id)}">${icon('download', 'ic-sm')} Baixar parecer médico (PDF)</button></div>
     </div>
-    <div class="id-note">${icon('lock', 'ic-sm')}<span>O parecer traz só a recomendação administrativa. Diagnóstico e conversa clínica ficam no prontuário da MediQuo (LGPD, dado de saúde é sensível).</span></div>`
-    : `<div class="id-empty">${icon('clipboard', 'ic-big')}<p>O médico ainda não emitiu o parecer deste caso.</p>${stepConsulta ? `<button type="button" class="id-btn outline" data-action="goto" data-step="${esc(stepConsulta)}">Ir para a consulta</button>` : ''}</div>`;
+    <div class="id-note">${icon('lock', 'ic-sm')}<span>O parecer não traz diagnóstico. A conversa clínica fica no prontuário da MediQuo (LGPD, dado de saúde é sensível).</span></div>`
+    : `<div class="id-empty">${icon('clipboard', 'ic-big')}<p>O médico ainda não emitiu o parecer deste caso.</p></div>`;
   return `
     <div class="id-grid-2">
       <div class="id-card"><div class="id-card-head"><div><h2 class="id-card-title">Parecer médico do caso</h2><p class="id-card-desc">${esc(col?.nome ?? '')} · ${esc(caso.id)}</p></div>${pill(caso.status)}</div><div class="id-card-body" style="display:grid;gap:1rem">${body}</div></div>
@@ -159,8 +158,8 @@ const dashboard = () => {
       <div class="id-card-head"><div><h2 class="id-card-title">Pareceres</h2><p class="id-card-desc">Anexados no período pela equipe médica, prontos para download.</p></div></div>
       <div class="id-card-body id-table-wrap">
         <table class="id-table">
-          <thead><tr><th>Caso</th><th>Colaborador</th><th>Afastamento</th><th>Recomendação</th><th>Anexado em</th><th></th></tr></thead>
-          <tbody>${pareceres.map((c) => `<tr class="${c.id === focusId ? 'focus' : ''}"><td class="num">${esc(c.id)}</td><td>${esc(getColaborador(c.colaboradorId)?.nome ?? '')}</td><td class="num">${esc(fmtDate(c.dataInicio))} → ${esc(fmtDate(addDays(c.dataInicio, c.dias - 1)))}<span class="sub">${esc(plural(c.dias, 'dia', 'dias'))}</span></td><td>${esc(DESFECHOS[c.desfecho?.tipo ?? '']?.label ?? '—')}</td><td class="num">${esc(fmtDate(c.parecer.anexadoEm))}</td><td><button type="button" class="id-btn outline sm" data-action="baixar" data-id="${esc(c.id)}">${icon('download', 'ic-sm')} PDF</button></td></tr>`).join('') || '<tr><td colspan="6" class="id-empty">Nenhum parecer anexado no período.</td></tr>'}</tbody>
+          <thead><tr><th>Caso</th><th>Colaborador</th><th>Afastamento</th><th>Status</th><th>Emitido em</th><th></th></tr></thead>
+          <tbody>${pareceres.map((c) => `<tr class="${c.id === focusId ? 'focus' : ''}"><td class="num">${esc(c.id)}</td><td>${esc(getColaborador(c.colaboradorId)?.nome ?? '')}</td><td class="num">${esc(fmtDate(c.dataInicio))} → ${esc(fmtDate(addDays(c.dataInicio, c.dias - 1)))}<span class="sub">${esc(plural(c.dias, 'dia', 'dias'))}</span></td><td>${pill(c.status)}</td><td class="num">${esc(fmtDate(c.parecer.anexadoEm))}</td><td><button type="button" class="id-btn outline sm" data-action="baixar" data-id="${esc(c.id)}">${icon('download', 'ic-sm')} PDF</button></td></tr>`).join('') || '<tr><td colspan="6" class="id-empty">Nenhum parecer anexado no período.</td></tr>'}</tbody>
         </table>
       </div>
     </div>`;
@@ -175,13 +174,17 @@ const dashboard = () => {
 };
 
 /**
- * @param {import('../journey/navigator.js').ScreenCtx} ctx
  * @returns {string}
  */
-const render = (ctx) => idShell('painel', `
+const render = () => {
+  // Simulação do protótipo: se o médico ainda não enviou o parecer, o RH recebe um parecer simulado.
+  const caso = getFocusCase();
+  if (!caso.parecer) simularParecer(caso.id, { silent: true });
+  return idShell('painel', `
   ${idHeader('Painel e pareceres', 'Dias de atestado, custo estimado e pareceres da equipe médica.')}
-  ${cardParecer(getFocusCase(), ctx)}
+  ${cardParecer(caso)}
   ${dashboard()}`);
+};
 
 /**
  * @param {HTMLElement} root
@@ -192,7 +195,7 @@ const bind = (root, ctx) => {
   const rerender = () => {
     const top = root.querySelector('.id-main')?.scrollTop ?? 0;
     const host = qs('.device-viewport', root);
-    host.innerHTML = render(ctx);
+    host.innerHTML = render();
     const main = host.querySelector('.id-main');
     if (main) main.scrollTop = top;
   };
@@ -211,7 +214,6 @@ const bind = (root, ctx) => {
       }
       ctx.toast('Download do parecer iniciado.', 'success');
     },
-    goto: (el) => ctx.goTo(el.dataset.step),
     'id-sub': (el) => handleIdSub(el.dataset.sub, ctx),
   });
   const onChange = (event) => {
